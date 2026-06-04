@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#f97316">
+  <title>KRAYVO | Shop Smart, Live Better</title>
+  <link rel="manifest" href="data:application/json,{'name':'KRAYVO','short_name':'KRAYVO','start_url':'/','display':'standalone'}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <style>
+    :root {
+      --site-primary: #f97316;
+      --site-primary-dark: #ea580c;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 4px 15px rgba(0,0,0,0.05);
+      --font: 'Inter', sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --text-secondary: #94a3b8; --border: #334155;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; min-height:100vh; padding-bottom:60px; }
+    .container { max-width:1300px; margin:0 auto; padding:0 16px; }
+    .btn {
+      display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:30px; font-weight:600;
+      border:none; cursor:pointer; transition:0.3s; font-size:0.9rem; background:var(--site-primary); color:#fff;
+      text-decoration:none;
+    }
+    .btn:hover { background:var(--site-primary-dark); transform:translateY(-2px); box-shadow:var(--shadow); }
+    .btn-outline { background:transparent; border:2px solid var(--site-primary); color:var(--site-primary); }
+    .btn-outline:hover { background:var(--site-primary); color:#fff; }
+    .btn-sm { padding:6px 14px; font-size:0.78rem; }
+    .input {
+      width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:30px;
+      background:var(--card); color:var(--text); font-size:0.95rem; outline:none;
+    }
+    .input:focus { border-color:var(--site-primary); }
+    /* Navbar */
+    .navbar {
+      position:sticky; top:0; z-index:100; background:var(--card); border-bottom:1px solid var(--border);
+      backdrop-filter:blur(20px); padding:12px 0;
+    }
+    .nav-inner { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .logo { font-family:'Poppins',sans-serif; font-weight:800; font-size:1.9rem; color:var(--site-primary); text-decoration:none; letter-spacing:-1px; display:flex; align-items:center; gap:6px; }
+    .logo i { font-size:1.6rem; }
+    .search-bar { flex:1; position:relative; min-width:200px; }
+    .search-bar input { padding-left:45px; }
+    .search-bar i { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-secondary); }
+    .nav-icons { display:flex; gap:12px; align-items:center; }
+    .nav-icons button, .nav-icons a { background:none; border:none; color:var(--text); font-size:1.3rem; cursor:pointer; position:relative; }
+    .badge { position:absolute; top:-6px; right:-8px; background:var(--site-primary); color:#fff; border-radius:50%; width:18px; height:18px; font-size:0.6rem; display:flex; align-items:center; justify-content:center; }
+    .team-login-btn { background:#111; color:#fff; border-radius:30px; padding:8px 16px; font-size:0.8rem; font-weight:600; cursor:pointer; }
+    /* Mobile bottom */
+    .mobile-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); z-index:99; justify-content:space-around; padding:8px 0; }
+    .mobile-nav a { color:var(--text-secondary); text-align:center; font-size:0.7rem; text-decoration:none; }
+    .mobile-nav a.active { color:var(--site-primary); }
+    @media (max-width:768px) {
+      .mobile-nav { display:flex; } .nav-icons .hide-mobile { display:none; }
+      .search-bar { order:1; width:100%; margin-top:8px; }
+    }
+    /* Section */
+    .section { margin:32px 0; }
+    .section-title { font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:16px; }
+    @media (max-width:500px) { .grid { grid-template-columns:1fr 1fr; } }
+    .product-card {
+      background:var(--card); border-radius:var(--radius); overflow:hidden; transition:0.3s;
+      border:1px solid var(--border); position:relative; display:flex; flex-direction:column;
+    }
+    .product-card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.08); }
+    .product-img {
+      height:200px; background:#f1f5f9; display:flex; align-items:center; justify-content:center;
+      font-size:3.5rem; position:relative;
+    }
+    .product-img img { width:100%; height:100%; object-fit:cover; }
+    .product-info { padding:14px; flex:1; display:flex; flex-direction:column; gap:6px; }
+    .product-brand { font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; }
+    .product-name { font-weight:600; font-size:0.9rem; }
+    .price-row span { margin-right:8px; }
+    .current-price { font-weight:700; font-size:1.05rem; }
+    .original-price { text-decoration:line-through; color:var(--text-secondary); font-size:0.8rem; }
+    .discount { color:#10b981; font-weight:600; }
+    .cart-btn {
+      margin-top:auto; padding:10px; border-radius:8px; background:var(--site-primary); color:#fff;
+      border:none; font-weight:600; cursor:pointer;
+    }
+    .wishlist-btn {
+      position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.9); border:none;
+      border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:1rem;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex;
+      align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:0.3s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal { background:var(--card); border-radius:var(--radius); padding:24px; max-width:450px; width:90%; position:relative; }
+    .modal-close { position:absolute; top:14px; right:14px; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text); }
+    .toast-container { position:fixed; top:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:8px; }
+    .toast { padding:12px 20px; border-radius:30px; color:#fff; font-weight:500; animation:slideIn 0.3s ease; }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+    .hidden { display:none!important; }
+  </style>
+</head>
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Header -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="logo"><i class="fas fa-bolt"></i> KRAYVO</a>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" class="input" placeholder="Search..." id="searchInput" oninput="liveSearch()">
+        <div id="searchSuggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--card);border-radius:8px;max-height:200px;overflow:auto;display:none;z-index:50;"></div>
+      </div>
+      <div class="nav-icons">
+        <button class="hide-mobile" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+        <button class="hide-mobile" onclick="openCart()"><i class="fas fa-shopping-cart"></i><span class="badge" id="cartCount">0</span></button>
+        <button onclick="openAuthModal()"><i class="fas fa-user"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Home main -->
+  <main class="container" id="homePage">
+    <section class="section" style="background:linear-gradient(135deg, var(--site-primary), #fbbf24); border-radius:24px; padding:36px; color:#fff;">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div>
+          <h1 id="heroTitle" style="font-size:2.2rem;">🔥 Big Billion Days</h1>
+          <p id="heroSub">Up to 70% off on fashion, electronics & more!</p>
+        </div>
+        <div style="font-size:6rem;">🛒</div>
+      </div>
+    </section>
+    <div class="section"><h2 class="section-title"><i class="fas fa-star"></i> Trending Now</h2><div class="grid" id="productGrid"></div></div>
+  </main>
+
+  <!-- Seller Dashboard -->
+  <div class="container hidden" id="sellerDashboard">
+    <div style="display:grid; grid-template-columns:220px 1fr; gap:20px;">
+      <div style="background:var(--card); border-radius:var(--radius); padding:16px;">
+        <h3>Seller Panel</h3>
+        <a href="#" onclick="sellerSection('products')" class="active">📦 My Products</a>
+        <a href="#" onclick="sellerSection('add')">➕ Add Product</a>
+        <a href="#" onclick="logout()">🚪 Logout</a>
+      </div>
+      <div>
+        <div id="sellerProducts"><h3>My Products</h3><div class="grid" id="sellerProductGrid"></div></div>
+        <div id="sellerAdd" class="hidden">
+          <h3>Add New Product</h3>
+          <form id="productForm" style="display:flex; flex-direction:column; gap:12px; max-width:450px;">
+            <input class="input" id="prodName" placeholder="Product Name" required>
+            <input class="input" id="prodBrand" placeholder="Brand">
+            <input class="input" id="prodPrice" type="number" placeholder="Price" required>
+            <input class="input" id="prodOriginalPrice" type="number" placeholder="Original Price">
+            <input class="input" id="prodDiscount" type="number" placeholder="Discount %">
+            <select class="input" id="prodCategory"><option>Electronics</option><option>Fashion</option><option>Home</option><option>Beauty</option></select>
+            <input class="input" id="prodImageUrl" placeholder="Image URL (optional)">
+            <input type="file" id="prodImageFile" accept="image/*">
+            <input class="input" id="affiliateLink" placeholder="Affiliate Buy Link (optional)">
+            <button type="submit" class="btn">Add Product</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div class="container hidden" id="adminDashboard">
+    <h2>⚙️ Admin Panel</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;">
+      <div class="product-card" style="padding:20px;"><h4>Total Products</h4><h2 id="adminProductCount">0</h2></div>
+      <div class="product-card" style="padding:20px;"><h4>Total Users</h4><h2 id="adminUserCount">0</h2></div>
+    </div>
+    <div class="section">
+      <h3>🛠️ Site Settings</h3>
+      <form id="settingsForm" style="max-width:500px;">
+        <label>Primary Color</label>
+        <input type="color" id="primaryColor" class="input" style="width:100px; padding:2px;">
+        <label>Site Name</label>
+        <input class="input" id="siteName" value="KRAYVO">
+        <label>Hero Title</label>
+        <input class="input" id="heroText" value="🔥 Big Billion Days">
+        <label>Hero Subtitle</label>
+        <input class="input" id="heroSubText" value="Up to 70% off">
+        <label>Copyright Text</label>
+        <input class="input" id="copyrightText" value="© KRAYVO. Shop Smart, Live Better.">
+        <button type="submit" class="btn" style="margin-top:12px;">Save Settings</button>
+      </form>
+    </div>
+    <div><h3>👥 Users</h3><div id="adminUserList"></div></div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeAuthModal()">✕</button>
+      <div id="authForm">
+        <h3>Welcome</h3>
+        <input class="input" id="authEmail" placeholder="Email" type="email" style="margin:8px 0;">
+        <input class="input" id="authPassword" placeholder="Password" type="password" style="margin:8px 0;">
+        <button class="btn" onclick="emailSignIn()">Login</button>
+        <button class="btn btn-outline" onclick="emailSignUp()" style="margin-top:8px;">Register</button>
+        <button class="btn" style="background:#fff; color:#333; border:1px solid #ccc;" onclick="googleSignIn()"><i class="fab fa-google"></i> Google</button>
+        <hr>
+        <button class="team-login-btn" onclick="teamLogin()">🔐 Team Login</button>
+      </div>
+      <div id="userProfile" class="hidden">
+        <h3>Hi, <span id="profileName"></span></h3>
+        <p id="profileEmail"></p>
+        <button class="btn btn-outline" onclick="logout()">Logout</button>
+        <button class="btn" id="sellerBtn" onclick="becomeSeller()">Become a Seller</button>
+        <button class="btn" id="adminPanelBtn" onclick="openAdmin()" style="display:none;">Admin Panel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Modal -->
+  <div class="modal-overlay" id="cartModal">
+    <div class="modal"><button class="modal-close" onclick="closeCart()">✕</button><h3>Cart</h3><div id="cartItems"></div><div style="margin-top:16px;display:flex;justify-content:space-between;"><strong>Total: ₹<span id="cartTotal">0</span></strong><button class="btn" onclick="checkout()">Pay via Razorpay</button></div></div>
+  </div>
+
+  <nav class="mobile-nav">
+    <a href="#" class="active"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="#" onclick="openCart()"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>
+    <a href="#" id="mobileSellerLink" style="display:none;" onclick="openSellerDashboard()"><i class="fas fa-store"></i><span>Sell</span></a>
+    <a href="#" onclick="openAuthModal()"><i class="fas fa-user"></i><span>Account</span></a>
+  </nav>
+
+  <script>
+    // Firebase init
+    firebase.initializeApp({
+      apiKey: "AIzaSyAe2LRnVIUWhROFBevXemEJJMUzqLW0Azc",
+      authDomain: "krayvo-131a8.firebaseapp.com",
+      projectId: "krayvo-131a8",
+      storageBucket: "krayvo-131a8.firebasestorage.app",
+      messagingSenderId: "278539390638",
+      appId: "1:278539390638:web:38cefde7899eb3c883a73f"
+    });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Sample products (if Firestore empty)
+    const sampleProducts = [
+      {name:"iPhone 15 Pro Max",brand:"Apple",price:1399,originalPrice:1599,imageUrl:"https://m.media-amazon.com/images/I/61HHS0HrRgL._SX522_.jpg",category:"Electronics",affiliateLink:"https://amzn.to/3xK3yN1"},
+      {name:"Samsung Galaxy S24 Ultra",brand:"Samsung",price:1249,originalPrice:1399,imageUrl:"https://m.media-amazon.com/images/I/71CXhM4nGFL._SX522_.jpg",category:"Electronics",affiliateLink:"https://amzn.to/3VvLk0J"},
+      {name:"Nike Air Max 90",brand:"Nike",price:119,originalPrice:150,imageUrl:"https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/8c3d04b7-9f8e-4f16-a8e8-3f5a0c5c7e8a/air-max-90-shoes.png",category:"Fashion",affiliateLink:"https://fkrt.it/xyz123"},
+      {name:"Maybelline Lipstick",brand:"Maybelline",price:8,originalPrice:12,imageUrl:"https://m.media-amazon.com/images/I/51Gxm8pN5sL._SL1500_.jpg",category:"Beauty",affiliateLink:"https://myntra.app.link/abc"},
+      {name:"boAt Smartwatch",brand:"boAt",price:49,originalPrice:99,imageUrl:"https://m.media-amazon.com/images/I/61KYC1GHXdL._SX522_.jpg",category:"Electronics",affiliateLink:""}
+    ];
+
+    let currentUser = null;
+    let userRole = 'customer';
+    let cart = JSON.parse(localStorage.getItem('krayvo_cart') || '[]');
+
+    // Toast
+    function showToast(msg,type='info') {
+      const c=document.getElementById('toastContainer');
+      const t=document.createElement('div'); t.className='toast';
+      t.style.background=type==='success'?'#10b981':type==='error'?'#ef4444':'#3b82f6';
+      t.textContent=msg; c.appendChild(t);
+      setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); },3000);
+    }
+    // Theme
+    function toggleTheme() {
+      const html=document.documentElement, th=html.getAttribute('data-theme');
+      html.setAttribute('data-theme', th==='dark'?'light':'dark');
+      localStorage.setItem('krayvo-theme', th==='dark'?'light':'dark');
+    }
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('krayvo-theme')||'light');
+
+    // Auth
+    function openAuthModal() { document.getElementById('authModal').classList.add('open'); updateAuthUI(); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+
+    async function updateAuthUI() {
+      const form=document.getElementById('authForm'), prof=document.getElementById('userProfile');
+      if(currentUser) {
+        form.classList.add('hidden'); prof.classList.remove('hidden');
+        document.getElementById('profileName').textContent=currentUser.displayName||currentUser.email;
+        document.getElementById('profileEmail').textContent=currentUser.email;
+        document.getElementById('sellerBtn').style.display=userRole==='seller'?'none':'inline-flex';
+        document.getElementById('adminPanelBtn').style.display=userRole==='admin'?'inline-flex':'none';
+        document.getElementById('mobileSellerLink').style.display=userRole==='seller'?'flex':'none';
+      } else {
+        form.classList.remove('hidden'); prof.classList.add('hidden');
+        document.getElementById('mobileSellerLink').style.display='none';
+      }
+    }
+
+    auth.onAuthStateChanged(async u=>{
+      currentUser=u;
+      if(u){
+        const doc=await db.collection('users').doc(u.uid).get();
+        userRole=doc.exists?doc.data().role:'customer';
+      } else userRole='customer';
+      updateAuthUI();
+      renderHome();
+      if(userRole==='seller') renderSellerProducts();
+      if(userRole==='admin') renderAdminStats();
+    });
+
+    async function emailSignUp(){
+      const e=document.getElementById('authEmail').value, p=document.getElementById('authPassword').value;
+      try{
+        const c=await auth.createUserWithEmailAndPassword(e,p);
+        await db.collection('users').doc(c.user.uid).set({email:e,role:'customer',createdAt:new Date()});
+        showToast('Account created!','success'); closeAuthModal();
+      } catch(err){ showToast(err.message,'error'); }
+    }
+    async function emailSignIn(){
+      const e=document.getElementById('authEmail').value, p=document.getElementById('authPassword').value;
+      try{ await auth.signInWithEmailAndPassword(e,p); showToast('Logged in','success'); closeAuthModal(); } catch(err){ showToast(err.message,'error'); }
+    }
+    async function googleSignIn(){
+      const p=new firebase.auth.GoogleAuthProvider();
+      try{
+        const r=await auth.signInWithPopup(p);
+        if(!(await db.collection('users').doc(r.user.uid).get()).exists)
+          await db.collection('users').doc(r.user.uid).set({email:r.user.email,role:'customer',createdAt:new Date()});
+        showToast('Google sign in','success'); closeAuthModal();
+      } catch(err){ showToast(err.message,'error'); }
+    }
+    async function teamLogin(){
+      try{
+        await auth.signInWithEmailAndPassword('team@krayvo.com','team97531');
+        showToast('Team logged in','success'); closeAuthModal();
+      } catch(e){ showToast('Team login failed. Create user in Firebase.','error'); }
+    }
+    async function becomeSeller(){
+      if(!currentUser) return;
+      await db.collection('users').doc(currentUser.uid).update({role:'seller'});
+      userRole='seller'; updateAuthUI(); showToast('You are now a seller!','success');
+    }
+    async function logout(){
+      await auth.signOut(); cart=[]; localStorage.removeItem('krayvo_cart'); updateCartCount();
+      closeAuthModal(); showHome(); showToast('Logged out','info');
+    }
+
+    // Products
+    async function fetchProducts(){
+      const snap=await db.collection('products').orderBy('createdAt','desc').get();
+      if(snap.empty) return sampleProducts.map((p,i)=>({id:'sample'+i,...p}));
+      return snap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+    async function renderHome(){
+      const grid=document.getElementById('productGrid');
+      const prods=await fetchProducts();
+      grid.innerHTML=prods.map(p=>productCardHTML(p)).join('');
+      updateCartCount();
+    }
+    function productCardHTML(p){
+      const discount=p.originalPrice?Math.round((1-p.price/p.originalPrice)*100):0;
+      return `<div class="product-card">
+        <div class="product-img">${p.imageUrl?`<img src="${p.imageUrl}" alt="${p.name}">`:'📦'}</div>
+        <div class="product-info">
+          <span class="product-brand">${p.brand||'Brand'}</span>
+          <span class="product-name">${p.name}</span>
+          <div class="price-row"><span class="current-price">₹${p.price}</span>${p.originalPrice?`<span class="original-price">₹${p.originalPrice}</span>`:''}${discount>0?`<span class="discount">-${discount}%</span>`:''}</div>
+          <button class="cart-btn" onclick="addToCart('${p.id}')">Add to Cart</button>
+          ${p.affiliateLink?`<a href="${p.affiliateLink}" target="_blank" class="btn btn-outline btn-sm" style="margin-top:4px;">Buy Now</a>`:''}
+        </div></div>`;
+    }
+
+    // Cart
+    function addToCart(pid){
+      const ex=cart.find(i=>i.productId===pid);
+      if(ex) ex.qty++; else cart.push({productId:pid,qty:1});
+      localStorage.setItem('krayvo_cart',JSON.stringify(cart)); updateCartCount(); showToast('Added','success');
+    }
+    function updateCartCount(){ document.getElementById('cartCount').textContent=cart.reduce((s,i)=>s+i.qty,0); }
+    function openCart(){ renderCart(); document.getElementById('cartModal').classList.add('open'); }
+    function closeCart(){ document.getElementById('cartModal').classList.remove('open'); }
+    async function renderCart(){
+      const cont=document.getElementById('cartItems'), prods=await fetchProducts();
+      let total=0;
+      cont.innerHTML=cart.map(i=>{
+        const p=prods.find(x=>x.id===i.productId); if(!p) return '';
+        total+=p.price*i.qty;
+        return `<div style="display:flex;justify-content:space-between;padding:8px 0;">${p.name} ₹${p.price} x${i.qty} <button class="btn-sm" onclick="removeFromCart('${i.productId}')">X</button></div>`;
+      }).join('');
+      document.getElementById('cartTotal').textContent=total;
+    }
+    function removeFromCart(pid){ cart=cart.filter(i=>i.productId!==pid); localStorage.setItem('krayvo_cart',JSON.stringify(cart)); updateCartCount(); renderCart(); }
+    function checkout(){
+      if(cart.length===0) return showToast('Cart empty','error');
+      window.open('https://razorpay.me/@bibekpatrabooks','_blank');
+      showToast('Redirecting to Razorpay...','info');
+      cart=[]; localStorage.removeItem('krayvo_cart'); updateCartCount(); closeCart();
+    }
+
+    // Seller
+    async function renderSellerProducts(){
+      if(!currentUser||userRole!=='seller') return;
+      const snap=await db.collection('products').where('sellerId','==',currentUser.uid).get();
+      document.getElementById('sellerProductGrid').innerHTML=snap.docs.map(d=>{
+        const p=d.data(); return `<div class="product-card"><div class="product-img">${p.imageUrl?`<img src="${p.imageUrl}">`:'📦'}</div><div><strong>${p.name}</strong> ₹${p.price}</div><button onclick="deleteProduct('${d.id}')">Delete</button></div>`;
+      }).join('');
+    }
+    async function deleteProduct(did){ await db.collection('products').doc(did).delete(); renderSellerProducts(); showToast('Deleted','success'); }
+    document.getElementById('productForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      try{
+        const file=document.getElementById('prodImageFile').files[0];
+        let imageUrl=document.getElementById('prodImageUrl').value;
+        if(file){
+          const ref=storage.ref(`products/${currentUser.uid}/${Date.now()}_${file.name}`);
+          await ref.put(file); imageUrl=await ref.getDownloadURL();
+        }
+        await db.collection('products').add({
+          sellerId:currentUser.uid,
+          name:document.getElementById('prodName').value,
+          brand:document.getElementById('prodBrand').value,
+          price:Number(document.getElementById('prodPrice').value),
+          originalPrice:Number(document.getElementById('prodOriginalPrice').value)||null,
+          discount:Number(document.getElementById('prodDiscount').value)||0,
+          category:document.getElementById('prodCategory').value,
+          imageUrl,
+          affiliateLink:document.getElementById('affiliateLink').value||'',
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Product added!','success'); document.getElementById('productForm').reset();
+        renderSellerProducts(); renderHome();
+      } catch(err){ showToast('Error: '+err.message,'error'); }
+    });
+    function sellerSection(sec){
+      document.getElementById('sellerProducts').classList.toggle('hidden',sec!=='products');
+      document.getElementById('sellerAdd').classList.toggle('hidden',sec!=='add');
+    }
+    function openSellerDashboard(){
+      document.getElementById('homePage').classList.add('hidden');
+      document.getElementById('sellerDashboard').classList.remove('hidden');
+      document.getElementById('adminDashboard').classList.add('hidden');
+      renderSellerProducts();
+    }
+
+    // Admin
+    async function renderAdminStats(){
+      const ps=(await db.collection('products').get()).size;
+      const us=(await db.collection('users').get()).size;
+      document.getElementById('adminProductCount').textContent=ps;
+      document.getElementById('adminUserCount').textContent=us;
+      const snap=await db.collection('users').get();
+      document.getElementById('adminUserList').innerHTML=snap.docs.map(d=>{
+        const u=d.data();
+        return `<div style="display:flex;justify-content:space-between;padding:8px;">${u.email} (${u.role}) <select onchange="changeRole('${d.id}',this.value)"><option value="customer" ${u.role==='customer'?'selected':''}>Customer</option><option value="seller" ${u.role==='seller'?'selected':''}>Seller</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select></div>`;
+      }).join('');
+      // Load settings
+      const sett=await db.collection('settings').doc('siteConfig').get();
+      if(sett.exists){
+        const d=sett.data();
+        document.getElementById('primaryColor').value=d.primaryColor||'#f97316';
+        document.getElementById('siteName').value=d.siteName||'KRAYVO';
+        document.getElementById('heroText').value=d.heroText||'🔥 Big Billion Days';
+        document.getElementById('heroSubText').value=d.heroSub||'Up to 70% off';
+        document.getElementById('copyrightText').value=d.copyright||'© KRAYVO. Shop Smart, Live Better.';
+      }
+    }
+    async function changeRole(uid,role){ await db.collection('users').doc(uid).update({role}); renderAdminStats(); }
+    document.getElementById('settingsForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const data={
+        primaryColor:document.getElementById('primaryColor').value,
+        siteName:document.getElementById('siteName').value,
+        heroText:document.getElementById('heroText').value,
+        heroSub:document.getElementById('heroSubText').value,
+        copyright:document.getElementById('copyrightText').value
+      };
+      await db.collection('settings').doc('siteConfig').set(data);
+      applySettings(data);
+      showToast('Settings saved!','success');
+    });
+    function applySettings(s){
+      document.documentElement.style.setProperty('--site-primary',s.primaryColor||'#f97316');
+      document.documentElement.style.setProperty('--site-primary-dark',adjustColor(s.primaryColor,-20));
+      document.querySelector('.logo').innerHTML=`<i class="fas fa-bolt"></i> ${s.siteName||'KRAYVO'}`;
+      document.getElementById('heroTitle').textContent=s.heroText||'🔥 Big Billion Days';
+      document.getElementById('heroSub').textContent=s.heroSub||'Up to 70% off';
+      document.querySelector('footer .copyright').textContent=s.copyright||'© KRAYVO.';
+    }
+    function adjustColor(hex,amt){
+      let c=hex.replace('#',''); if(c.length===3) c=c.split('').map(h=>h+h).join('');
+      let r=parseInt(c.substring(0,2),16)+amt,g=parseInt(c.substring(2,4),16)+amt,b=parseInt(c.substring(4,6),16)+amt;
+      r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+      return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+    async function openAdmin(){
+      document.getElementById('homePage').classList.add('hidden');
+      document.getElementById('sellerDashboard').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      renderAdminStats();
+    }
+    function showHome(){
+      document.getElementById('homePage').classList.remove('hidden');
+      document.getElementById('sellerDashboard').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.add('hidden');
+    }
+
+    // Load settings on startup
+    async function loadSettings(){
+      const snap=await db.collection('settings').doc('siteConfig').get();
+      if(snap.exists) applySettings(snap.data());
+    }
+    loadSettings();
+
+    updateCartCount();
+    renderHome();
+  </script>
+</body>
+</html>
