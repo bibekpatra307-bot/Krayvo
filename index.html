@@ -627,3 +627,309 @@
   </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRAYVO Admin | Manage Products</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 24px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .admin-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    h1 { font-size: 1.8rem; color: #6366f1; }
+    .btn {
+      padding: 10px 20px; border-radius: 8px;
+      border: none; font-weight: 600;
+      cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-outline { background: transparent; border: 1px solid #cbd5e1; }
+    .card {
+      background: white; border-radius: 16px;
+      padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px; font-size: 0.9rem;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .product-item {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .product-item img {
+      width: 100%; height: 140px;
+      object-fit: cover; border-radius: 8px;
+      background: #e2e8f0;
+    }
+    .product-actions {
+      display: flex; gap: 8px;
+      margin-top: 12px;
+    }
+    .edit-btn, .delete-btn {
+      flex: 1; padding: 6px;
+      border-radius: 6px; cursor: pointer;
+      text-align: center;
+    }
+    .edit-btn { background: #3b82f6; color: white; }
+    .delete-btn { background: #ef4444; color: white; }
+    .hidden { display: none; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: #0f172a; color: white;
+      padding: 12px 20px; border-radius: 8px;
+      z-index: 1000;
+    }
+    .status-badge {
+      background: #10b981; color: white;
+      padding: 4px 8px; border-radius: 20px;
+      font-size: 0.7rem;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="admin-header">
+    <h1><i class="fas fa-crown"></i> KRAYVO Admin Panel</h1>
+    <div>
+      <span id="adminEmail" style="margin-right: 16px;"></span>
+      <button class="btn btn-outline" onclick="logout()">Logout</button>
+      <a href="index.html" class="btn btn-primary" style="margin-left: 8px;">← Back to Store</a>
+    </div>
+  </div>
+
+  <!-- Product Form Card -->
+  <div class="card">
+    <h2 id="formTitle">➕ Add New Product</h2>
+    <form id="productForm">
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input type="text" id="prodName" required>
+      </div>
+      <div class="form-group">
+        <label>Brand</label>
+        <input type="text" id="prodBrand">
+      </div>
+      <div class="form-group">
+        <label>Price (₹) *</label>
+        <input type="number" id="prodPrice" required>
+      </div>
+      <div class="form-group">
+        <label>Original Price (₹)</label>
+        <input type="number" id="prodOriginalPrice">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="prodCategory">
+          <option>Electronics</option><option>Fashion</option><option>Home</option><option>Beauty</option><option>Books</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Image URL (or upload below)</label>
+        <input type="text" id="prodImageUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Upload Image (JPEG/PNG)</label>
+        <input type="file" id="prodImageFile" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label>Affiliate Link (optional)</label>
+        <input type="url" id="affiliateLink" placeholder="https://...">
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">Publish Product</button>
+      <button type="button" class="btn btn-outline" id="cancelEditBtn" onclick="resetForm()" style="display:none;">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Products List -->
+  <div class="card">
+    <h2>📦 Manage Products</h2>
+    <div class="product-grid" id="adminProductGrid"></div>
+  </div>
+</div>
+
+<script>
+  // Firebase Config (same as main store)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAe2LRnVIUWhROFBevXemEJJMUzqLW0Azc",
+    authDomain: "krayvo-131a8.firebaseapp.com",
+    projectId: "krayvo-131a8",
+    storageBucket: "krayvo-131a8.firebasestorage.app",
+    messagingSenderId: "278539390638",
+    appId: "1:278539390638:web:38cefde7899eb3c883a73f"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  let editingProductId = null;
+
+  // Auth check: only admin allowed
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      // Redirect to main store or show login
+      window.location.href = "index.html";
+      return;
+    }
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    const role = userDoc.exists ? userDoc.data().role : 'customer';
+    if (role !== 'admin') {
+      alert('Access denied. Admin only.');
+      auth.signOut();
+      window.location.href = "index.html";
+      return;
+    }
+    document.getElementById('adminEmail').innerText = user.email;
+    loadProducts();
+  });
+
+  function loadProducts() {
+    db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderProductList(products);
+    });
+  }
+
+  function renderProductList(products) {
+    const grid = document.getElementById('adminProductGrid');
+    if (!products.length) {
+      grid.innerHTML = '<p>No products yet. Add your first product above.</p>';
+      return;
+    }
+    grid.innerHTML = products.map(p => `
+      <div class="product-item">
+        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}">` : '<div style="height:140px; background:#e2e8f0; display:flex; align-items:center; justify-content:center;">📦</div>'}
+        <h4 style="margin-top:8px;">${p.name}</h4>
+        <p style="color:#475569;">₹${p.price} ${p.originalPrice ? `<span style="text-decoration:line-through;">₹${p.originalPrice}</span>` : ''}</p>
+        <p style="font-size:0.75rem;">${p.category || 'Uncategorized'}</p>
+        <div class="product-actions">
+          <div class="edit-btn" onclick="editProduct('${p.id}')">Edit</div>
+          <div class="delete-btn" onclick="deleteProduct('${p.id}')">Delete</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('productForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('prodName').value.trim();
+    const brand = document.getElementById('prodBrand').value.trim();
+    const price = parseFloat(document.getElementById('prodPrice').value);
+    const originalPrice = parseFloat(document.getElementById('prodOriginalPrice').value) || null;
+    const category = document.getElementById('prodCategory').value;
+    let imageUrl = document.getElementById('prodImageUrl').value.trim();
+    const affiliateLink = document.getElementById('affiliateLink').value.trim();
+
+    const file = document.getElementById('prodImageFile').files[0];
+    if (file) {
+      const storageRef = storage.ref(`admin_products/${Date.now()}_${file.name}`);
+      await storageRef.put(file);
+      imageUrl = await storageRef.getDownloadURL();
+    }
+
+    if (!name || isNaN(price)) return alert('Name and price are required');
+
+    const productData = {
+      name, brand, price, originalPrice, category,
+      imageUrl: imageUrl || null,
+      affiliateLink: affiliateLink || '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (editingProductId) {
+      await db.collection('products').doc(editingProductId).update(productData);
+      showToast('Product updated!', 'success');
+      resetForm();
+    } else {
+      productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      productData.sellerId = 'admin';
+      await db.collection('products').add(productData);
+      showToast('Product published!', 'success');
+    }
+    document.getElementById('productForm').reset();
+    document.getElementById('prodImageUrl').value = '';
+  });
+
+  async function editProduct(id) {
+    const doc = await db.collection('products').doc(id).get();
+    if (!doc.exists) return;
+    const p = doc.data();
+    editingProductId = id;
+    document.getElementById('prodName').value = p.name || '';
+    document.getElementById('prodBrand').value = p.brand || '';
+    document.getElementById('prodPrice').value = p.price || '';
+    document.getElementById('prodOriginalPrice').value = p.originalPrice || '';
+    document.getElementById('prodCategory').value = p.category || 'Electronics';
+    document.getElementById('prodImageUrl').value = p.imageUrl || '';
+    document.getElementById('affiliateLink').value = p.affiliateLink || '';
+    document.getElementById('formTitle').innerHTML = '✏️ Edit Product';
+    document.getElementById('submitBtn').innerText = 'Update Product';
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+  }
+
+  async function deleteProduct(id) {
+    if (confirm('Delete this product permanently?')) {
+      await db.collection('products').doc(id).delete();
+      showToast('Product deleted', 'success');
+    }
+  }
+
+  function resetForm() {
+    editingProductId = null;
+    document.getElementById('productForm').reset();
+    document.getElementById('formTitle').innerHTML = '➕ Add New Product';
+    document.getElementById('submitBtn').innerText = 'Publish Product';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('prodImageUrl').value = '';
+  }
+
+  function showToast(msg, type) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  async function logout() {
+    await auth.signOut();
+    window.location.href = "index.html";
+  }
+</script>
+</body>
+</html>
