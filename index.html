@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="description" content="KRAYVO - Shop Smart, Live Better. Compare Amazon, Flipkart, Myntra, Savana, Ajio, Meesho deals live!">
+  <title>KRAYVO | Multi‑Marketplace Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --font-sans: 'Inter', sans-serif;
+      --font-display: 'Playfair Display', serif;
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
+      --radius: 20px;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+    
+    /* Navbar (unchanged) */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 12px 0;
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .nav-icons { display: flex; gap: 12px; }
+    .nav-icons button {
+      background: none; border: none;
+      font-size: 1.2rem; cursor: pointer;
+      color: var(--text); position: relative;
+    }
+    .badge {
+      position: absolute; top: -6px; right: -8px;
+      background: var(--danger); color: white;
+      font-size: 0.65rem; border-radius: 20px;
+      padding: 2px 6px;
+    }
+    .theme-toggle {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 40px; width: 36px; height: 36px;
+    }
+    .search-section { margin: 16px auto 0; max-width: 700px; width: 100%; }
+    .search-wrapper input {
+      width: 100%; padding: 14px 24px;
+      border-radius: 60px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text);
+      font-size: 1rem;
+    }
+    
+    /* Platform filter row (scrollable) */
+    .platform-filters {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 12px;
+      margin: 24px 0 16px;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+    }
+    .platform-btn {
+      flex: 0 0 auto;
+      padding: 10px 24px;
+      border-radius: 40px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .platform-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* Category row (second row) */
+    .category-filters {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 10px;
+      margin: 0 0 30px;
+      padding-bottom: 8px;
+    }
+    .category-pill {
+      flex: 0 0 auto;
+      padding: 6px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .category-pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* Speed banner (optional, kept from original) */
+    .speed-banner {
+      background: linear-gradient(120deg, #1e1b2e, #2d2a4e);
+      border-radius: 28px;
+      padding: 20px 30px;
+      margin: 10px 0 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      color: white;
+    }
+    .speed-banner h3 { font-size: 1.6rem; }
+    .adidas-tag { background: #232f3e; padding: 6px 16px; border-radius: 40px; font-weight: 600; }
+    
+    /* Product Grid */
+    .products-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 20px 0 20px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    /* Product Card */
+    .product-card {
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+    .product-img {
+      position: relative;
+      height: 220px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .product-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .marketplace-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .wishlist-btn, .quickview-btn {
+      position: absolute;
+      background: var(--card);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: var(--shadow);
+      color: var(--text-muted);
+    }
+    .wishlist-btn { top: 10px; right: 10px; }
+    .quickview-btn { bottom: 10px; right: 10px; }
+    .wishlist-btn:hover { color: var(--danger); background: #fff0f0; }
+    .quickview-btn:hover { color: var(--primary); }
+    .product-info {
+      padding: 14px;
+    }
+    .product-brand {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .product-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 6px 0;
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0;
+    }
+    .discount-price {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--primary);
+    }
+    .original-price {
+      text-decoration: line-through;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .discount-percent {
+      background: var(--success);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .buy-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .buy-btn:hover { background: var(--primary-dark); }
+    
+    /* Modal styles */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      opacity: 0; pointer-events: none;
+      transition: 0.2s;
+    }
+    .modal.open { opacity: 1; pointer-events: all; }
+    .modal-content {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 24px;
+      width: 90%;
+      max-width: 450px;
+    }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--text);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      z-index: 1100;
+    }
+    @media (max-width: 680px) {
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .platform-btn, .category-pill { font-size: 0.8rem; padding: 6px 14px; }
+    }
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    .no-products {
+      text-align: center;
+      padding: 50px;
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="container nav-inner">
+    <a href="#" class="logo">KRAYVO</a>
+    <div class="nav-icons">
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      <button onclick="openCart()">🛒<span class="badge" id="cartCount">0</span></button>
+      <button onclick="openAuth()">👤</button>
+    </div>
+  </div>
+  <div class="container search-section">
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" placeholder="Search products across all platforms..." oninput="globalSearch()">
+    </div>
+  </div>
+</div>
+
+<main class="container">
+  <!-- Platform filters (first row) -->
+  <div class="platform-filters" id="platformFilters"></div>
+  
+  <!-- Category filters (second row) -->
+  <div class="category-filters" id="categoryFilters"></div>
+
+  <!-- Speed banner (optional, kept from original) -->
+  <div class="speed-banner">
+    <div>
+      <h3>⚡ Speed starts here</h3>
+      <p>Min. 40% Off | Power every step with ADIDAS</p>
+    </div>
+    <div class="adidas-tag">🔥 ADIDAS MEGA SALE</div>
+  </div>
+
+  <!-- Products Header & Grid -->
+  <div class="products-header">
+    <h2 id="sectionTitle">KRAYVO Originals</h2>
+    <span style="color:var(--text-muted);">Live prices · Instant updates</span>
+  </div>
+  <div class="product-grid" id="productGrid"></div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 KRAYVO — Live prices from Amazon, Flipkart, Myntra, Savana, Ajio, Meesho. Click product to visit official store.</p>
+  </div>
+</footer>
+
+<!-- Cart Modal -->
+<div id="cartModal" class="modal">
+  <div class="modal-content">
+    <h3>Your Cart</h3>
+    <div id="cartItems"></div>
+    <div style="margin-top:16px; display:flex; justify-content:space-between;">
+      <strong>Total: ₹<span id="cartTotal">0</span></strong>
+      <button class="buy-btn" style="width:auto; padding:8px 20px;" onclick="checkout()">Checkout</button>
+    </div>
+    <button onclick="closeCart()" style="margin-top:12px;">Close</button>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <h3>Login / Register</h3>
+    <input type="email" id="authEmail" placeholder="Email" style="width:100%; margin:8px 0; padding:10px;">
+    <input type="password" id="authPassword" placeholder="Password" style="width:100%; margin:8px 0; padding:10px;">
+    <button class="buy-btn" onclick="emailLogin()">Login</button>
+    <button class="buy-btn" style="background:transparent; color:var(--primary);" onclick="emailSignup()">Create Account</button>
+    <button class="buy-btn" style="background:#fff; color:#000;" onclick="googleLogin()">Google Sign-in</button>
+    <button onclick="closeAuth()">Close</button>
+  </div>
+</div>
+
+<script>
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAe2LRnVIUWhROFBevXemEJJMUzqLW0Azc",
+    authDomain: "krayvo-131a8.firebaseapp.com",
+    projectId: "krayvo-131a8",
+    storageBucket: "krayvo-131a8.firebasestorage.app",
+    messagingSenderId: "278539390638",
+    appId: "1:278539390638:web:38cefde7899eb3c883a73f"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let allProducts = [];
+  let cart = JSON.parse(localStorage.getItem('krayvo_cart')) || [];
+  let currentPlatform = "krayvo";
+  let currentCategory = "For You";
+  let searchQuery = "";
+
+  // Platform definitions (order: KRAYVO first, then marketplaces)
+  const platforms = [
+    { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1' },
+    { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900' },
+    { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0' },
+    { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63' },
+    { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32' },
+    { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316' },
+    { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e' }
+  ];
+
+  // Category definitions (second row)
+  const categories = [
+    "For You", "Mobile", "Fashion", "Beauty", "Electronics", 
+    "Home & Kitchen", "Accessories", "Books"
+  ];
+
+  // Helper functions (cart, auth, theme)
+  function showToast(msg, type='success') {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerText = msg;
+    t.style.background = type === 'error' ? '#ef4444' : '#10b981';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  function updateCartUI() {
+    const count = cart.reduce((s,i)=>s+i.qty,0);
+    document.getElementById('cartCount').innerText = count;
+    localStorage.setItem('krayvo_cart', JSON.stringify(cart));
+  }
+
+  function addToCart(pid) {
+    const existing = cart.find(i => i.id === pid);
+    if(existing) existing.qty++;
+    else cart.push({ id: pid, qty: 1 });
+    updateCartUI();
+    showToast('Added to cart');
+  }
+
+  function removeFromCart(pid) {
+    cart = cart.filter(i => i.id !== pid);
+    updateCartUI();
+    renderCart();
+  }
+
+  async function renderCart() {
+    const container = document.getElementById('cartItems');
+    if(cart.length===0) { container.innerHTML='<p>Cart empty</p>'; document.getElementById('cartTotal').innerText='0'; return; }
+    let total=0;
+    const prodMap = {};
+    allProducts.forEach(p=>prodMap[p.id]=p);
+    container.innerHTML = cart.map(item=>{
+      const p = prodMap[item.id];
+      if(!p) return '';
+      total += p.price * item.qty;
+      return `<div style="display:flex; justify-content:space-between; margin:8px 0;">
+        <span>${escapeHtml(p.name)} x${item.qty} ₹${p.price}</span>
+        <button onclick="removeFromCart('${item.id}')">Remove</button>
+      </div>`;
+    }).join('');
+    document.getElementById('cartTotal').innerText = total;
+  }
+
+  function checkout() {
+    if(cart.length===0) return showToast('Cart empty','error');
+    window.open('https://razorpay.me/@bibekpatrabooks', '_blank');
+    cart = [];
+    updateCartUI();
+    closeCart();
+    showToast('Redirecting to payment');
+  }
+
+  function openCart() { renderCart(); document.getElementById('cartModal').classList.add('open'); }
+  function closeCart() { document.getElementById('cartModal').classList.remove('open'); }
+  function openAuth() { document.getElementById('authModal').classList.add('open'); }
+  function closeAuth() { document.getElementById('authModal').classList.remove('open'); }
+
+  async function emailLogin() {
+    try {
+      await auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPassword').value);
+      showToast('Logged in'); closeAuth();
+    } catch(e){ showToast(e.message,'error'); }
+  }
+  async function emailSignup() {
+    try {
+      await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPassword').value);
+      showToast('Account created'); closeAuth();
+    } catch(e){ showToast(e.message,'error'); }
+  }
+  async function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+      await auth.signInWithPopup(provider);
+      showToast('Google signin'); closeAuth();
+    } catch(e){ showToast(e.message,'error'); }
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+  if(localStorage.getItem('theme')) document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'));
+
+  function escapeHtml(str) {
+    if(!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+  }
+
+  // Filter products based on currentPlatform, currentCategory, searchQuery
+  function getFilteredProducts() {
+    let filtered = [];
+    if (currentPlatform === 'krayvo') {
+      // KRAYVO products: those with platform === 'krayvo' OR platform missing/null
+      filtered = allProducts.filter(p => !p.platform || p.platform === 'krayvo');
+    } else {
+      filtered = allProducts.filter(p => p.platform === currentPlatform);
+    }
+
+    // Apply search
+    if (searchQuery) {
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery) || (p.brand && p.brand.toLowerCase().includes(searchQuery)));
+    }
+
+    // Apply category (special handling for "For You")
+    if (currentCategory !== "For You") {
+      filtered = filtered.filter(p => p.category === currentCategory);
+    } else {
+      // "For You": recently added (by createdAt), trending (high discount or high views), popular (random mix)
+      // For simplicity, we'll sort by createdAt desc and take first 12, then mix with some discount ones
+      const recentlyAdded = [...filtered].sort((a,b) => {
+        let dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        let dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA;
+      }).slice(0, 12);
+      const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0, 8);
+      // Combine unique
+      const combined = [...recentlyAdded, ...discounted];
+      filtered = combined.filter((v,i,a)=>a.findIndex(t=>t.id===v.id)===i);
+      if (filtered.length === 0) filtered = allProducts.slice(0, 16); // fallback
+    }
+    return filtered;
+  }
+
+  // Render product grid
+  function renderProducts() {
+    const filtered = getFilteredProducts();
+    const grid = document.getElementById('productGrid');
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="no-products">✨ No products found. Try changing filters or add products via admin panel.</div>`;
+      return;
+    }
+    grid.innerHTML = filtered.map(p => {
+      let imgHtml = (p.imageData && p.imageData.startsWith('data:image')) ? `<img src="${p.imageData}" alt="${p.name}">` :
+                    (p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}">` : 
+                    `<div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:3rem;">📦</div>`);
+      const discountPercent = p.originalPrice ? Math.round((1 - p.price/p.originalPrice)*100) : 0;
+      const platformInfo = platforms.find(plat => plat.key === (p.platform || 'krayvo')) || platforms[0];
+      return `
+        <div class="product-card" data-id="${p.id}" data-affiliate="${p.affiliateLink || ''}">
+          <div class="product-img">
+            ${imgHtml}
+            <div class="marketplace-badge"><i class="${platformInfo.icon}"></i> ${platformInfo.label}</div>
+            <div class="wishlist-btn" onclick="event.stopPropagation();toggleWishlist('${p.id}')"><i class="far fa-heart"></i></div>
+            <div class="quickview-btn" onclick="event.stopPropagation();quickView('${p.id}')"><i class="far fa-eye"></i></div>
+          </div>
+          <div class="product-info">
+            <div class="product-brand">${escapeHtml(p.brand || platformInfo.label)}</div>
+            <div class="product-name">${escapeHtml(p.name)}</div>
+            <div class="price-row">
+              <span class="discount-price">₹${p.price}</span>
+              ${p.originalPrice ? `<span class="original-price">₹${p.originalPrice}</span>` : ''}
+              ${discountPercent > 0 ? `<span class="discount-percent">-${discountPercent}%</span>` : ''}
+            </div>
+            <button class="buy-btn" onclick="event.stopPropagation();redirectToAffiliate('${p.affiliateLink || ''}')">Buy Now →</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('sectionTitle').innerHTML = `${currentPlatform.toUpperCase()} ${currentCategory !== "For You" ? `· ${currentCategory}` : '· For You'}`;
+  }
+
+  function redirectToAffiliate(link) {
+    if(link && link !== '#') window.open(link, '_blank');
+    else showToast('Affiliate link not available', 'info');
+  }
+
+  function toggleWishlist(pid) {
+    let wishlist = JSON.parse(localStorage.getItem('krayvo_wishlist') || '[]');
+    if(wishlist.includes(pid)) {
+      wishlist = wishlist.filter(id => id !== pid);
+      showToast('Removed from wishlist');
+    } else {
+      wishlist.push(pid);
+      showToast('Added to wishlist');
+    }
+    localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
+  }
+
+  function quickView(pid) {
+    const product = allProducts.find(p => p.id === pid);
+    if(product) {
+      alert(`Quick View: ${product.name}\nPrice: ₹${product.price}\nBrand: ${product.brand || 'N/A'}`);
+    }
+  }
+
+  // Render platform filter buttons
+  function renderPlatformFilters() {
+    const container = document.getElementById('platformFilters');
+    container.innerHTML = platforms.map(plat => `
+      <button class="platform-btn ${currentPlatform === plat.key ? 'active' : ''}" data-platform="${plat.key}">
+        <i class="${plat.icon}" style="color:${currentPlatform === plat.key ? 'white' : plat.color}"></i> ${plat.label}
+      </button>
+    `).join('');
+    document.querySelectorAll('.platform-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPlatform = btn.dataset.platform;
+        currentCategory = "For You"; // reset category to For You when platform changes
+        renderPlatformFilters();
+        renderCategoryFilters();
+        renderProducts();
+      });
+    });
+  }
+
+  // Render category filter pills
+  function renderCategoryFilters() {
+    const container = document.getElementById('categoryFilters');
+    container.innerHTML = categories.map(cat => `
+      <span class="category-pill ${currentCategory === cat ? 'active' : ''}" data-category="${cat}">${cat}</span>
+    `).join('');
+    document.querySelectorAll('.category-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        currentCategory = pill.dataset.category;
+        renderCategoryFilters();
+        renderProducts();
+      });
+    });
+  }
+
+  function globalSearch() {
+    searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+    renderProducts();
+  }
+
+  // Real-time Firestore listener
+  db.collection('products').onSnapshot(snap => {
+    allProducts = snap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        price: data.price || 0,
+        originalPrice: data.originalPrice || null,
+        category: data.category || 'General',
+        platform: data.platform || null,
+        createdAt: data.createdAt || null
+      };
+    });
+    renderProducts();
+    updateCartUI();
+  });
+
+  // Seed demo products if database empty (with the requested products)
+  setTimeout(async () => {
+    const snapshot = await db.collection('products').limit(1).get();
+    if(snapshot.empty) {
+      const demoProducts = [];
+      // Amazon products
+      const amazonProducts = [
+        { name: "Samsung Galaxy S25", brand: "Samsung", price: 79999, originalPrice: 89999, category: "Mobile", platform: "amazon", affiliateLink: "https://amazon.in" },
+        { name: "Apple iPhone 17", brand: "Apple", price: 99999, originalPrice: 109999, category: "Mobile", platform: "amazon", affiliateLink: "https://amazon.in" },
+        { name: "Sony Headphones", brand: "Sony", price: 4999, originalPrice: 9999, category: "Electronics", platform: "amazon", affiliateLink: "https://amazon.in" },
+        { name: "Boat Smartwatch", brand: "boAt", price: 2499, originalPrice: 4999, category: "Accessories", platform: "amazon", affiliateLink: "https://amazon.in" }
+      ];
+      // Flipkart products
+      const flipkartProducts = [
+        { name: "Realme GT Series", brand: "Realme", price: 29999, originalPrice: 39999, category: "Mobile", platform: "flipkart", affiliateLink: "https://flipkart.com" },
+        { name: "Vivo V Series", brand: "Vivo", price: 27999, originalPrice: 34999, category: "Mobile", platform: "flipkart", affiliateLink: "https://flipkart.com" },
+        { name: "HP Laptop", brand: "HP", price: 54999, originalPrice: 69999, category: "Electronics", platform: "flipkart", affiliateLink: "https://flipkart.com" },
+        { name: "Lenovo Tablet", brand: "Lenovo", price: 19999, originalPrice: 29999, category: "Electronics", platform: "flipkart", affiliateLink: "https://flipkart.com" }
+      ];
+      // Myntra products
+      const myntraProducts = [
+        { name: "Nike Shoes", brand: "Nike", price: 3999, originalPrice: 7999, category: "Fashion", platform: "myntra", affiliateLink: "https://myntra.com" },
+        { name: "Adidas T-Shirts", brand: "Adidas", price: 1299, originalPrice: 2499, category: "Fashion", platform: "myntra", affiliateLink: "https://myntra.com" },
+        { name: "Puma Jackets", brand: "Puma", price: 2999, originalPrice: 5999, category: "Fashion", platform: "myntra", affiliateLink: "https://myntra.com" },
+        { name: "Levi's Jeans", brand: "Levi's", price: 1999, originalPrice: 3999, category: "Fashion", platform: "myntra", affiliateLink: "https://myntra.com" }
+      ];
+      // Ajio products
+      const ajioProducts = [
+        { name: "Casual Shirts", brand: "Roadster", price: 899, originalPrice: 1999, category: "Fashion", platform: "ajio", affiliateLink: "https://ajio.com" },
+        { name: "Sneakers", brand: "Campus", price: 1499, originalPrice: 2999, category: "Fashion", platform: "ajio", affiliateLink: "https://ajio.com" },
+        { name: "Watches", brand: "Fastrack", price: 1999, originalPrice: 3999, category: "Accessories", platform: "ajio", affiliateLink: "https://ajio.com" }
+      ];
+      // Meesho products
+      const meeshoProducts = [
+        { name: "Home Decor", brand: "DecorVibe", price: 499, originalPrice: 999, category: "Home & Kitchen", platform: "meesho", affiliateLink: "https://meesho.com" },
+        { name: "Kitchen Products", brand: "KitchenStar", price: 399, originalPrice: 799, category: "Home & Kitchen", platform: "meesho", affiliateLink: "https://meesho.com" },
+        { name: "Beauty Products", brand: "Glow", price: 299, originalPrice: 599, category: "Beauty", platform: "meesho", affiliateLink: "https://meesho.com" }
+      ];
+      // Savana products
+      const savanaProducts = [
+        { name: "Women's Fashion", brand: "Savana", price: 1299, originalPrice: 2499, category: "Fashion", platform: "savana", affiliateLink: "https://savana.com" },
+        { name: "Dresses", brand: "Savana", price: 899, originalPrice: 1999, category: "Fashion", platform: "savana", affiliateLink: "https://savana.com" },
+        { name: "Handbags", brand: "Savana", price: 1099, originalPrice: 2499, category: "Accessories", platform: "savana", affiliateLink: "https://savana.com" }
+      ];
+      // KRAYVO own products (extra)
+      const krayvoProducts = [
+        { name: "KRAYVO Smart LED", brand: "KRAYVO", price: 899, originalPrice: 1999, category: "Electronics", platform: "krayvo", affiliateLink: "#" },
+        { name: "Premium Hoodie", brand: "KRAYVO", price: 1499, originalPrice: 2999, category: "Fashion", platform: "krayvo", affiliateLink: "#" },
+        { name: "Wireless Earbuds", brand: "KRAYVO", price: 999, originalPrice: 1999, category: "Electronics", platform: "krayvo", affiliateLink: "#" }
+      ];
+      const allDemo = [...amazonProducts, ...flipkartProducts, ...myntraProducts, ...ajioProducts, ...meeshoProducts, ...savanaProducts, ...krayvoProducts];
+      for(let prod of allDemo) {
+        await db.collection('products').add({
+          ...prod,
+          imageData: null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          sellerId: 'admin'
+        });
+      }
+      showToast("🔥 Demo products added! You can now filter by platform and category.", "success");
+    }
+  }, 2000);
+
+  // Initial render
+  renderPlatformFilters();
+  renderCategoryFilters();
+  updateCartUI();
+</script>
+</body>
+</html>
