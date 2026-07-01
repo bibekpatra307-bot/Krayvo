@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Opening Official Store... | KRAYVO</title>
+  <meta name="description" content="You are being redirected to the official store within KRAYVO.">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { margin: 0; padding: 0; }
+    .iframe-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg);
+    }
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+      position: relative; z-index: 10;
+    }
+    .top-bar .logo { font-family: var(--font-display); font-weight: 700; color: var(--primary); text-decoration: none; font-size: 1.2rem; }
+    .top-bar .actions { display: flex; gap: 8px; }
+    .top-bar .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
+    .iframe-wrapper {
+      position: absolute; top: 50px; left: 0; right: 0; bottom: 0;
+      background: white; /* official site will have its own bg */
+    }
+    .iframe-wrapper iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    .error-overlay {
+      display: none; position: absolute; top: 50px; left: 0; right: 0; bottom: 0;
+      background: var(--card); flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
+    }
+    .error-overlay.active { display: flex; }
+  </style>
+</head>
+<body>
+  <div class="iframe-container">
+    <div class="top-bar">
+      <a href="index.html" class="logo">← KRAYVO</a>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" onclick="openInNewTab()">🔗 Open in New Tab</button>
+      </div>
+    </div>
+    <div class="iframe-wrapper" id="iframeWrapper">
+      <iframe id="officialFrame" src="" title="Official Store"></iframe>
+    </div>
+    <div class="error-overlay" id="errorOverlay">
+      <h3>⚠️ This store cannot be embedded</h3>
+      <p style="color:var(--text-muted);">Security settings prevent direct loading inside KRAYVO.</p>
+      <button class="btn btn-primary" onclick="openInNewTab()">Open in New Tab</button>
+    </div>
+  </div>
+
+  <script>
+    // Platform URL mapping – easy to add new platforms
+    const platformUrls = {
+      amazon: "https://www.amazon.in",
+      flipkart: "https://www.flipkart.com",
+      myntra: "https://www.myntra.com",
+      ajio: "https://www.ajio.com",
+      savana: "https://www.savana.com",
+      meesho: "https://www.meesho.com"
+    };
+
+    // Get platform from URL query
+    const params = new URLSearchParams(window.location.search);
+    const platform = params.get('platform');
+    const url = platformUrls[platform] || platformUrls.amazon; // default fallback
+
+    // Set iframe source and load handler
+    const iframe = document.getElementById('officialFrame');
+    iframe.src = url;
+
+    // Detect if iframe fails to load (X-Frame-Options blocks it)
+    iframe.addEventListener('load', () => {
+      // Check if the iframe content is accessible (same-origin?) – not reliable cross-origin.
+      // We'll use a timeout fallback: if after 4 seconds the iframe is still blank or has an error page?
+      // Simpler: many sites send 'X-Frame-Options: DENY', so browser blocks it and iframe.onerror may not fire.
+      // We'll rely on a timer and check if iframe contentWindow is null? Not allowed cross-origin.
+      // Instead, we'll always show the error overlay after a short delay if the iframe didn't load visually.
+      // But that's tricky. We'll use the approach: after 3 seconds, if no message from iframe, show fallback?
+      // Since we can't reliably detect, we'll show a manual "Open in New Tab" button always in top bar.
+      // The error overlay will only appear if user manually triggers? 
+      // Actually, we can rely on the fact that most major Indian ecommerce sites block iframe.
+      // So we'll set a timeout: after 5 seconds, if the iframe is still on the same domain (not navigated),
+      // we assume it's blocked and show the error overlay. But since it's cross-origin, we can't read its location.
+      // Alternative: show the error overlay by default? No.
+      // The best UX: always show the top bar with "Open in New Tab" button prominently, and let the iframe load.
+      // If it works, great; if not, user clicks the button.
+      // We'll also attempt to detect via postMessage? Not possible.
+      // So we'll not use the error overlay by default; just provide the button.
+      // The top bar already has the button. That's sufficient.
+      document.getElementById('errorOverlay').classList.remove('active');
+    });
+
+    iframe.addEventListener('error', () => {
+      document.getElementById('errorOverlay').classList.add('active');
+    });
+
+    // Fallback: after 10 seconds, if iframe hasn't loaded something, maybe show a message?
+    setTimeout(() => {
+      // Not perfect, but we'll add a small hint if user stays long.
+      // We can check if iframe.contentDocument is accessible? No.
+      // We'll just ensure the button is visible.
+    }, 10000);
+
+    function openInNewTab() {
+      window.open(url, '_blank', 'noopener');
+    }
+  </script>
+</body>
+</html>
