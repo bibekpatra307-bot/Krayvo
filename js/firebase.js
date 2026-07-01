@@ -1,4 +1,4 @@
-// Firebase configuration
+// Firebase configuration (using your existing project)
 const firebaseConfig = {
   apiKey: "AIzaSyAe2LRnVIUWhROFBevXemEJJMUzqLW0Azc",
   authDomain: "krayvo-131a8.firebaseapp.com",
