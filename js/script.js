@@ -1,33 +1,42 @@
-// Load components
+// Load common components and initialize theme/cart
 document.addEventListener('DOMContentLoaded', async () => {
   // Load Header
-  const headerResp = await fetch('components/header.html');
-  const headerHTML = await headerResp.text();
-  document.getElementById('app-header').innerHTML = headerHTML;
+  try {
+    const headerResp = await fetch('components/header.html');
+    const headerHTML = await headerResp.text();
+    const headerEl = document.getElementById('app-header');
+    if (headerEl) headerEl.innerHTML = headerHTML;
+  } catch(e) { console.error('Header load failed', e); }
 
   // Load Footer
-  const footerResp = await fetch('components/footer.html');
-  const footerHTML = await footerResp.text();
-  document.getElementById('app-footer').innerHTML = footerHTML;
+  try {
+    const footerResp = await fetch('components/footer.html');
+    const footerHTML = await footerResp.text();
+    const footerEl = document.getElementById('app-footer');
+    if (footerEl) footerEl.innerHTML = footerHTML;
+  } catch(e) { console.error('Footer load failed', e); }
 
-  // Initialize cart count and theme
-  updateCartCount();
+  // Initialize theme and cart count
   initTheme();
-
-  // Attach event listeners for dynamic elements
-  const menuToggle = document.querySelector('.menu-toggle');
-  if (menuToggle) {
-    menuToggle.addEventListener('click', toggleMenu);
-  }
+  updateCartCount();
+  
+  // Attach menu toggle after header is loaded (needs slight delay for dynamic content)
+  setTimeout(() => {
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (menuToggle) {
+      menuToggle.addEventListener('click', toggleMenu);
+    }
+  }, 100);
 });
 
 function toggleMenu() {
-  document.getElementById('navLinks').classList.toggle('open');
+  const nav = document.getElementById('navLinks');
+  if (nav) nav.classList.toggle('open');
 }
 
 function toggleTheme() {
   const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
+  const current = html.getAttribute('data-theme') || 'light';
   const newTheme = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', newTheme);
   localStorage.setItem('theme', newTheme);
@@ -45,12 +54,20 @@ function updateCartCount() {
   if (countEl) countEl.textContent = count;
 }
 
-// Common toast notification
+// Toast notification
 function showToast(msg, type = 'success') {
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
+  toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
-// (Add CSS for .toast in style.css)
+
+// Helper to get product image
+function getProductImage(product) {
+  if (product.imageData && product.imageData.startsWith('data:image')) return product.imageData;
+  if (product.imageUrl && product.imageUrl.trim() !== '') return product.imageUrl;
+  const emojis = { Mobile: "📱", Fashion: "👕", Beauty: "💄", Electronics: "💻", "Home & Kitchen": "🏠", Accessories: "⌚", Books: "📚" };
+  const icon = emojis[product.category] || "📦";
+  return `https://placehold.co/400x400/1e293b/white?text=${icon}`;
+}
