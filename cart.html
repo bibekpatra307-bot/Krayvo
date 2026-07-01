@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart | KRAYVO</title>
+  <meta name="description" content="Review your cart and checkout securely.">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+  
+  <main class="container" style="padding:40px 0;">
+    <a href="index.html" class="btn btn-outline btn-sm" style="margin-bottom:20px;">← Continue Shopping</a>
+    <h1 style="margin-bottom:24px;">🛒 Your Cart</h1>
+    <div id="cartContainer"></div>
+    <div id="cartSummary" class="cart-summary" style="display:none;">
+      <h2>Order Summary</h2>
+      <p style="font-size:1.2rem; margin:16px 0;">Total: <strong>₹<span id="totalAmount">0</span></strong></p>
+      <button class="btn btn-primary checkout-btn" onclick="checkout()">Proceed to Pay</button>
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="js/script.js"></script>
+  <script>
+    // Demo product lookup (same dataset)
+    const platformsList = [
+      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown' },
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem' }
+    ];
+    const categories = ["Mobile","Fashion","Beauty","Electronics","Home & Kitchen","Accessories","Books"];
+    const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
+    
+    const DEMO_PRODUCTS = [];
+    platformsList.forEach(plat => {
+      for(let i=1; i<=20; i++){
+        const cat = categories[i % categories.length];
+        const price = Math.floor(Math.random()*5000)+299;
+        const origPrice = price + Math.floor(Math.random()*3000)+200;
+        DEMO_PRODUCTS.push({
+          id: `demo_${plat.key}_${i}`,
+          name: `${brandNames[plat.key]} ${cat} ${i}`,
+          brand: brandNames[plat.key],
+          price,
+          originalPrice: origPrice,
+          category: cat,
+          platform: plat.key,
+          imageUrl: null,
+          affiliateLink: plat.key === 'krayvo' ? '#' : `https://www.${plat.key}.com`,
+        });
+      }
+    });
+
+    let cart = JSON.parse(localStorage.getItem('krayvo_cart')) || [];
+
+    function getProductImage(p) {
+      if(p.imageData) return p.imageData;
+      if(p.imageUrl && p.imageUrl.trim()) return p.imageUrl;
+      const emojis = {"Mobile":"📱","Fashion":"👕","Beauty":"💄","Electronics":"💻","Home & Kitchen":"🏠","Accessories":"⌚","Books":"📚"};
+      return `https://placehold.co/100x100/1e293b/white?text=${emojis[p.category]||'📦'}`;
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartContainer');
+      const summary = document.getElementById('cartSummary');
+      if(cart.length === 0) {
+        container.innerHTML = '<div class="empty-cart">Your cart is empty.</div>';
+        summary.style.display = 'none';
+        return;
+      }
+      let total = 0;
+      container.innerHTML = cart.map(item => {
+        const prod = DEMO_PRODUCTS.find(p => p.id === item.id);
+        if(!prod) return '';
+        const itemTotal = prod.price * item.qty;
+        total += itemTotal;
+        return `
+          <div class="cart-item">
+            <img src="${getProductImage(prod)}" alt="${prod.name}">
+            <div class="item-details">
+              <h4 class="item-name">${prod.name}</h4>
+              <p style="color:var(--text-muted);">Qty: ${item.qty} × ₹${prod.price}</p>
+            </div>
+            <div class="item-price">₹${itemTotal}</div>
+            <button class="remove-btn" onclick="removeItem('${item.id}')">Remove</button>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('totalAmount').textContent = total;
+      summary.style.display = 'block';
+    }
+
+    window.removeItem = (pid) => {
+      cart = cart.filter(item => item.id !== pid);
+      localStorage.setItem('krayvo_cart', JSON.stringify(cart));
+      renderCart();
+      updateCartCount();
+    };
+
+    window.checkout = () => {
+      // Filter KRAYVO items for Razorpay, others redirect
+      const krayvoItems = cart.filter(item => {
+        const prod = DEMO_PRODUCTS.find(p => p.id === item.id);
+        return prod && (prod.platform === 'krayvo' || !prod.platform);
+      });
+      if(krayvoItems.length === 0) {
+        showToast('Only KRAYVO products can be checked out here. Others redirect to their store.', 'error');
+        return;
+      }
+      let totalAmount = 0;
+      krayvoItems.forEach(item => {
+        const prod = DEMO_PRODUCTS.find(p => p.id === item.id);
+        if(prod) totalAmount += prod.price * item.qty;
+      });
+      const options = {
+        key: "rzp_test_YourTestKeyHere",
+        amount: totalAmount * 100,
+        currency: "INR",
+        name: "KRAYVO",
+        description: "Cart Checkout",
+        handler: function(response) {
+          showToast('Payment successful! Order placed.');
+          // Remove KRAYVO items from cart
+          cart = cart.filter(item => !krayvoItems.some(ki => ki.id === item.id));
+          localStorage.setItem('krayvo_cart', JSON.stringify(cart));
+          renderCart();
+          updateCartCount();
+        },
+        prefill: { email: "guest@example.com" },
+        theme: { color: "#6366f1" }
+      };
+      new Razorpay(options).open();
+    };
+
+    renderCart();
+  </script>
+</body>
+</html>
