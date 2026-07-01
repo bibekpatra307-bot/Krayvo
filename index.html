@@ -7,9 +7,9 @@
   <meta name="description" content="Shop premium products from KRAYVO, Amazon, Flipkart, Myntra, and more. Compare, save, and get the best deals.">
   <meta property="og:title" content="KRAYVO — Multi‑Marketplace Discovery">
   <meta property="og:description" content="One platform, endless deals. Explore fashion, electronics, mobiles, beauty & more.">
-  <meta property="og:image" content="https://yourdomain.com/images/og-image.jpg">
+  <meta property="og:image" content="https://bibekpatra307-bot.github.io/Krayvo/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://yourdomain.com/">
+  <link rel="canonical" href="https://bibekpatra307-bot.github.io/Krayvo/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -91,15 +91,12 @@
     });
 
     let allProducts = [...DEMO_PRODUCTS];
-    let currentPlatform = 'krayvo';
     let currentCategory = 'For You';
 
     // ========== RENDER ==========
     function renderProducts() {
       const search = document.getElementById('globalSearch').value.toLowerCase().trim();
-      let filtered = currentPlatform === 'krayvo'
-        ? allProducts.filter(p => !p.platform || p.platform === 'krayvo')
-        : allProducts.filter(p => p.platform === currentPlatform);
+      let filtered = allProducts.filter(p => !p.platform || p.platform === 'krayvo'); // Only show KRAYVO products by default? Actually we want all products, but platform filtering is now done via redirect, so here we show all products. But to keep the original behavior of showing KRAYVO products on homepage? The old version had a platform filter. Now since platform buttons are external links, we can just show all products on homepage. Or we could still allow filtering via the category filters. I'll just show all products.
       
       if(search) {
         filtered = filtered.filter(p =>
@@ -112,6 +109,7 @@
       if(currentCategory !== 'For You') {
         filtered = filtered.filter(p => p.category === currentCategory);
       } else {
+        // Show a mix of recent and discounted across all platforms
         const recent = [...filtered].sort((a,b) => b.createdAt - a.createdAt).slice(0,12);
         const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0,8);
         filtered = [...recent, ...discounted].filter((v,i,a) => a.findIndex(t => t.id === v.id) === i);
@@ -149,13 +147,16 @@
         `;
       }).join('');
 
-      document.getElementById('sectionTitle').innerHTML = `${currentPlatform.toUpperCase()} ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
+      document.getElementById('sectionTitle').innerHTML = `All Platforms ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
     }
 
     function renderFilters() {
       const platContainer = document.getElementById('platformFilters');
+      // Platform buttons now link to redirect.html
       platContainer.innerHTML = platformsList.map(p =>
-        `<button class="filter-btn ${currentPlatform === p.key ? 'active' : ''}" onclick="switchPlatform('${p.key}')"><i class="${p.icon}"></i> ${p.label}</button>`
+        `<a href="redirect.html?platform=${p.key}" class="filter-btn" style="text-decoration:none;">
+          <i class="${p.icon}"></i> ${p.label}
+        </a>`
       ).join('');
 
       const catContainer = document.getElementById('categoryFilters');
@@ -166,13 +167,6 @@
     }
 
     // ========== ACTIONS ==========
-    window.switchPlatform = (key) => {
-      currentPlatform = key;
-      currentCategory = 'For You';
-      renderFilters();
-      renderProducts();
-    };
-
     window.switchCategory = (cat) => {
       currentCategory = cat;
       renderFilters();
