@@ -3,21 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product | KRAYVO</title>
-  <meta name="description" content="Product detail page">
+  <title>Product Details | KRAYVO</title>
+  <meta name="description" content="View product details, compare prices, and buy from multiple platforms.">
   <link rel="stylesheet" href="css/style.css">
-  <!-- fonts, icons, firebase, razorpay -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
   <div id="app-header"></div>
-  <main class="container" id="productDetail">Loading...</main>
+  
+  <main class="container" style="padding: 40px 0;">
+    <a href="index.html" class="btn btn-outline btn-sm" style="margin-bottom:20px;">← Back to store</a>
+    <div id="productDetail" class="card"></div>
+  </main>
+
   <div id="app-footer"></div>
-  <script src="js/firebase.js"></script>
+
   <script src="js/script.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    // Same product detail logic as previously shared, ensure to use getProductImage, showToast etc.
-    // Fetch product id from URL and display.
+    // Demo product database (same as homepage, can be loaded dynamically)
+    const platformsList = [
+      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1' },
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e' }
+    ];
+    const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
+    const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
+    
+    // Build demo products
+    const DEMO_PRODUCTS = [];
+    platformsList.forEach(plat => {
+      for(let i=1; i<=20; i++){
+        const cat = categories[i % categories.length];
+        const price = Math.floor(Math.random()*5000)+299;
+        const origPrice = price + Math.floor(Math.random()*3000)+200;
+        DEMO_PRODUCTS.push({
+          id: `demo_${plat.key}_${i}`,
+          name: `${brandNames[plat.key]} ${cat} ${i}`,
+          brand: brandNames[plat.key],
+          price,
+          originalPrice: origPrice,
+          category: cat,
+          platform: plat.key,
+          imageUrl: null,
+          affiliateLink: plat.key === 'krayvo' ? '#' : `https://www.${plat.key}.com`,
+          createdAt: new Date()
+        });
+      }
+    });
+
+    // Get product ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+    const product = DEMO_PRODUCTS.find(p => p.id === productId) || DEMO_PRODUCTS[0];
+
+    function getProductImage(p) {
+      if(p.imageData && p.imageData.startsWith('data:image')) return p.imageData;
+      if(p.imageUrl && p.imageUrl.trim()) return p.imageUrl;
+      const emojis = { Mobile:"📱", Fashion:"👕", Beauty:"💄", Electronics:"💻", "Home & Kitchen":"🏠", Accessories:"⌚", Books:"📚" };
+      const icon = emojis[p.category] || "📦";
+      return `https://placehold.co/600x400/1e293b/white?text=${icon}`;
+    }
+
+    function addToCart(pid) {
+      let cart = JSON.parse(localStorage.getItem('krayvo_cart')) || [];
+      const existing = cart.find(item => item.id === pid);
+      if(existing) existing.qty++;
+      else cart.push({ id: pid, qty: 1 });
+      localStorage.setItem('krayvo_cart', JSON.stringify(cart));
+      showToast('Added to cart!');
+      updateCartCount();
+    }
+
+    function buyNow() {
+      if (product.platform === 'krayvo' || !product.platform) {
+        const options = {
+          key: "rzp_test_YourTestKeyHere",
+          amount: product.price * 100,
+          currency: "INR",
+          name: "KRAYVO",
+          description: product.name,
+          handler: function(response) { showToast('Payment successful!'); },
+          prefill: { email: "guest@example.com" },
+          theme: { color: "#6366f1" }
+        };
+        new Razorpay(options).open();
+      } else {
+        if (product.affiliateLink && product.affiliateLink !== '#') window.open(product.affiliateLink, '_blank');
+        else showToast('No link available', 'error');
+      }
+    }
+
+    // Render detail page
+    if (product) {
+      const discount = product.originalPrice ? Math.round((1 - product.price/product.originalPrice)*100) : 0;
+      const platInfo = platformsList.find(pl => pl.key === product.platform) || platformsList[0];
+      document.getElementById('productDetail').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start;">
+          <div style="border-radius:20px; overflow:hidden; background:var(--bg);">
+            <img src="${getProductImage(product)}" alt="${product.name}" style="width:100%; max-height:400px; object-fit:contain;">
+          </div>
+          <div>
+            <div class="platform-badge" style="display:inline-flex; margin-bottom:12px; background:rgba(0,0,0,0.7); color:white; padding:4px 12px; border-radius:20px; font-size:0.8rem;">
+              <i class="${platInfo.icon}"></i> ${platInfo.label}
+            </div>
+            <h1 style="font-size:2rem; font-weight:700; margin-bottom:8px;">${product.name}</h1>
+            <p style="color:var(--text-muted);">${product.brand} · ${product.category}</p>
+            <div style="margin:20px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <span style="font-size:2rem; font-weight:800; color:var(--primary);">₹${product.price}</span>
+              ${product.originalPrice ? `<span style="font-size:1.2rem; text-decoration:line-through; color:var(--text-muted);">₹${product.originalPrice}</span>` : ''}
+              ${discount > 0 ? `<span style="background:var(--success); color:white; padding:4px 12px; border-radius:20px; font-weight:600;">${discount}% OFF</span>` : ''}
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="buyNow()">Buy Now →</button>
+              <button class="btn btn-outline" onclick="addToCart('${product.id}')">🛒 Add to Cart</button>
+            </div>
+            ${product.platform !== 'krayvo' ? '<p style="margin-top:16px; color:var(--text-muted); font-size:0.9rem;">You will be redirected to the official store for purchase.</p>' : ''}
+          </div>
+        </div>
+      `;
+    } else {
+      document.getElementById('productDetail').innerHTML = '<h2>Product not found</h2>';
+    }
   </script>
 </body>
 </html>
