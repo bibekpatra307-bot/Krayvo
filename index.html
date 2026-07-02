@@ -17,85 +17,37 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
-    /* ── Content Area (seamless) ── */
-    .content-area {
-      position: relative;
-      width: 100%;
-      min-height: 400px;
-      background: transparent;
+    /* Platform Overlay Styles */
+    .platform-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg); z-index: 1000;
+      display: none; flex-direction: column;
     }
-
-    /* Product Grid (default) */
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px;
+    .platform-overlay.active { display: flex; }
+    .overlay-top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border);
     }
-    @media (max-width: 640px) {
-      .product-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-      }
+    .overlay-top-bar .back-btn {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer;
+      color: var(--text); padding: 8px;
+      border-radius: 8px; transition: var(--transition);
     }
-
-    /* Poster & Iframe containers – no borders, no shadows */
-    .platform-display {
-      display: none;
-      width: 100%;
-      background: transparent;
-      transition: opacity 0.25s ease;
+    .overlay-top-bar .back-btn:hover { background: var(--border); }
+    .overlay-top-bar .title { font-weight: 600; }
+    .overlay-top-bar .actions { display: flex; gap: 8px; }
+    .iframe-area {
+      flex: 1; position: relative; background: white;
     }
-    .platform-display.active {
-      display: block;
+    .iframe-area iframe {
+      width: 100%; height: 100%; border: none;
     }
-
-    /* Poster images – full width, responsive */
-    .platform-display img.poster-image {
-      display: block;
-      width: 100%;
-      height: auto;
-      cursor: pointer;
+    .iframe-fallback {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--card); flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
     }
-
-    /* Iframe – full width, no border */
-    .platform-display iframe {
-      display: block;
-      width: 100%;
-      height: 600px;
-      border: none;
-      background: #fff;
-    }
-    @media (max-width: 640px) {
-      .platform-display iframe {
-        height: 400px;
-      }
-    }
-
-    /* Active platform button highlight */
-    .filter-btn.active-platform {
-      border: 2px solid #6366f1;
-      background: rgba(99,102,241,0.1);
-      box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
-    }
-
-    /* Fallback poster inside iframe container (shown if iframe fails) */
-    .iframe-fallback-poster {
-      display: none;
-      width: 100%;
-      cursor: pointer;
-    }
-    .iframe-fallback-poster.active {
-      display: block;
-    }
-    .iframe-fallback-poster img {
-      width: 100%;
-      height: auto;
-    }
-
-    /* Ensure the content area has no extra spacing */
-    .content-area > * {
-      margin: 0;
-    }
+    .iframe-fallback.active { display: flex; }
   </style>
 </head>
 <body>
@@ -107,7 +59,7 @@
       <h1>Discover the Best Deals Across Every Store</h1>
       <p>KRAYVO brings together KRAYVO Originals, Amazon, Flipkart, Myntra, and more – compare, save, and shop in one place.</p>
       <div class="search-wrapper">
-        <input type="text" id="globalSearch" placeholder="Search products, brands, categories..." oninput="handleSearch()">
+        <input type="text" id="globalSearch" placeholder="Search products, brands, categories..." oninput="renderProducts()">
       </div>
       <div class="trending-searches">
         <span>Trending: </span>
@@ -123,277 +75,94 @@
       <div class="category-filters" id="categoryFilters"></div>
     </div>
 
-    <!-- Products Header (kept for consistency) -->
+    <!-- Products Header -->
     <div class="products-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
       <h2 id="sectionTitle">All Platforms · For You</h2>
       <span style="color:var(--text-muted);">Live prices · Instant updates</span>
     </div>
+    <div class="product-grid" id="productGrid"></div>
+  </main>
 
-    <!-- Content Area -->
-    <div class="content-area">
-      <!-- Product Grid (default) -->
-      <div class="product-grid" id="productGrid"></div>
-
-      <!-- Platform Displays (posters and iframes) -->
-      <div id="platformDisplayContainer">
-        <!-- Dynamically injected by JavaScript -->
+  <!-- Platform Overlay (hidden by default) -->
+  <div class="platform-overlay" id="platformOverlay">
+    <div class="overlay-top-bar">
+      <button class="back-btn" onclick="closePlatformOverlay()">✕</button>
+      <span class="title" id="overlayTitle">Official Store</span>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open in New Tab</button>
       </div>
     </div>
-  </main>
+    <div class="iframe-area">
+      <iframe id="storeIframe" src="" title="Official Store"></iframe>
+      <div class="iframe-fallback" id="iframeFallback">
+        <h3>⚠️ This store cannot be displayed here</h3>
+        <p style="color:var(--text-muted);">Security settings prevent embedding. Please open in a new tab.</p>
+        <button class="btn btn-primary" onclick="openInNewTabFromFallback()">Open in New Tab</button>
+      </div>
+    </div>
+  </div>
 
   <div id="app-footer"></div>
 
   <script src="js/firebase.js"></script>
   <script src="js/script.js"></script>
   <script>
-    // ─── PLATFORM CONFIG ────────────────────────────────────────────
+    // Platform data and URLs
     const platformsList = [
       { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
-      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://amazon.in' },
-      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0', url: 'https://flipkart.com' },
-      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63', url: 'https://myntra.com' },
-      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32', url: 'https://savana.com' },
-      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316', url: 'https://ajo.com' },   // note: ajo.com as per spec
-      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://meesho.com' }
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0', url: 'https://www.flipkart.com' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63', url: 'https://www.myntra.com' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32', url: 'https://www.savana.com' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316', url: 'https://www.ajio.com' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://www.meesho.com' }
     ];
 
-    // Define display type per platform
-    const platformDisplayType = {
-      amazon: 'poster',
-      flipkart: 'iframe',
-      myntra: 'poster',
-      savana: 'iframe',
-      ajio: 'poster',
-      meesho: 'poster'
-    };
+    let currentPlatformUrl = '';
 
-    // ─── STATE ──────────────────────────────────────────────────────
-    let activePlatform = null;          // 'amazon', 'flipkart', etc.
-    let allProducts = [];
-    let currentCategory = 'For You';
-
-    // ─── POSTER MOCKUP GENERATOR ──────────────────────────────────
-    function generatePosterHTML(platformKey) {
+    // Open platform overlay
+    function openPlatformOverlay(platformKey, label) {
       const plat = platformsList.find(p => p.key === platformKey);
-      if (!plat) return '';
-      const label = plat.label;
-      const icon = plat.icon;
-      const color = plat.color;
-      // Dummy product items (8 items)
-      const dummyItems = Array.from({ length: 8 }, (_, i) => `
-        <div class="poster-product" style="background:#fff; border-radius:8px; padding:8px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-          <div style="height:80px; background:#eef2f7; border-radius:4px; margin-bottom:6px;"></div>
-          <div style="font-weight:500; font-size:0.8rem;">${label} Item ${i+1}</div>
-          <div style="color:#1e2a3a; font-weight:600;">₹${Math.floor(Math.random()*5000+500)}</div>
-        </div>
-      `).join('');
-
-      return `
-        <div class="platform-display poster-display" data-platform="${platformKey}" style="cursor:pointer;">
-          <div style="max-width:1200px; margin:0 auto; padding:0;">
-            <!-- Header -->
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eaeef2; flex-wrap:wrap; gap:8px;">
-              <div style="font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:8px;">
-                <i class="${icon}" style="color:${color};"></i> ${label}
-              </div>
-              <div style="flex:1 1 200px; background:#f1f3f6; border-radius:30px; padding:6px 16px; color:#777; display:flex; align-items:center; gap:10px; font-size:0.9rem;">
-                <i class="fas fa-search"></i> <span>Search ${label}...</span>
-              </div>
-              <div><i class="fas fa-user"></i> <i class="fas fa-shopping-cart" style="margin-left:12px;"></i></div>
-            </div>
-            <!-- Nav -->
-            <div style="display:flex; gap:16px; font-size:0.85rem; color:#1e2a3a; padding:10px 0; border-bottom:1px solid #eaeef2; flex-wrap:wrap;">
-              <span>Electronics</span> <span>Fashion</span> <span>Home</span> <span>Beauty</span> <span>Mobiles</span> <span>Books</span>
-            </div>
-            <!-- Banner -->
-            <div style="margin:16px 0; height:120px; background:linear-gradient(135deg, #e0e7ef, #cbd5e1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#1e2a3a; font-weight:600;">
-              🔥 Big ${label} Sale – Up to 70% Off
-            </div>
-            <!-- Products -->
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; margin:16px 0;">
-              ${dummyItems}
-            </div>
-            <!-- Footer -->
-            <div style="border-top:1px solid #eaeef2; padding:16px 0 8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; color:#5f6c80; font-size:0.75rem;">
-              <div style="display:flex; gap:20px;">
-                <span>About</span> <span>Contact</span> <span>Terms</span> <span>Privacy</span>
-              </div>
-              <span>© 2026 ${label} – All rights reserved</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    // ─── INIT DISPLAY CONTAINER ──────────────────────────────────
-    function initPlatformDisplays() {
-      const container = document.getElementById('platformDisplayContainer');
-      // For each platform that is not 'krayvo', generate its display
-      const html = platformsList
-        .filter(p => p.key !== 'krayvo')
-        .map(p => {
-          const type = platformDisplayType[p.key] || 'poster';
-          if (type === 'poster') {
-            return generatePosterHTML(p.key);
-          } else {
-            // iframe type – we'll generate a container with iframe and fallback
-            return `
-              <div class="platform-display iframe-display" data-platform="${p.key}" style="position:relative;">
-                <iframe src="${p.url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                <!-- Fallback poster (hidden by default) -->
-                <div class="iframe-fallback-poster" style="position:absolute; top:0; left:0; width:100%; height:100%; background:#fff; cursor:pointer; display:none;">
-                  ${generatePosterHTML(p.key)}
-                </div>
-              </div>
-            `;
-          }
-        })
-        .join('');
-      container.innerHTML = html;
-
-      // Attach click listeners for poster displays (redirect to real URL)
-      document.querySelectorAll('.poster-display').forEach(el => {
-        const platformKey = el.dataset.platform;
-        const plat = platformsList.find(p => p.key === platformKey);
-        if (!plat) return;
-        el.addEventListener('click', () => {
-          if (plat.url && plat.url !== '#') {
-            window.open(plat.url, '_blank');
-          }
-        });
-      });
-
-      // For iframe displays, handle iframe load errors and fallback
-      document.querySelectorAll('.iframe-display').forEach(containerEl => {
-        const iframe = containerEl.querySelector('iframe');
-        const fallback = containerEl.querySelector('.iframe-fallback-poster');
-        const platformKey = containerEl.dataset.platform;
-        const plat = platformsList.find(p => p.key === platformKey);
-        if (!plat) return;
-
-        // If iframe fails to load, show fallback poster
-        iframe.addEventListener('error', () => {
-          iframe.style.display = 'none';
-          fallback.style.display = 'block';
-          // Make fallback clickable to open URL
-          fallback.addEventListener('click', () => {
-            if (plat.url && plat.url !== '#') {
-              window.open(plat.url, '_blank');
-            }
-          });
-        });
-
-        // Also, if after 5 seconds the iframe hasn't loaded (still blank), we can check contentWindow? 
-        // But we'll rely on error event; some sites block without error, but we can also try to detect if contentWindow is null.
-        // We'll add a timeout to check if iframe content is accessible, but for simplicity, we'll rely on error.
-        // Additionally, we can provide a manual fallback: if user clicks on the iframe area and it's not loaded, we can redirect.
-        // But we'll keep it simple.
-      });
-    }
-    initPlatformDisplays();
-
-    // ─── SHOW / HIDE CONTENT ──────────────────────────────────────
-    function showContent(type, platformKey) {
-      // Hide everything
-      document.getElementById('productGrid').style.display = 'none';
-      document.querySelectorAll('.platform-display').forEach(el => el.classList.remove('active'));
-
-      if (type === 'products') {
-        document.getElementById('productGrid').style.display = 'grid';
+      if (!plat || !plat.url || plat.url === '#') {
+        showToast('KRAYVO products are already on the homepage', 'info');
         return;
       }
+      currentPlatformUrl = plat.url;
+      document.getElementById('overlayTitle').textContent = label + ' Official Store';
+      document.getElementById('storeIframe').src = plat.url;
+      document.getElementById('iframeFallback').classList.remove('active');
+      document.getElementById('platformOverlay').classList.add('active');
 
-      // Show the appropriate display
-      const display = document.querySelector(`.platform-display[data-platform="${platformKey}"]`);
-      if (display) {
-        display.classList.add('active');
-        // If it's an iframe display, ensure iframe is visible and fallback hidden
-        if (display.classList.contains('iframe-display')) {
-          const iframe = display.querySelector('iframe');
-          const fallback = display.querySelector('.iframe-fallback-poster');
-          if (iframe) iframe.style.display = 'block';
-          if (fallback) fallback.style.display = 'none';
-        }
-      }
+      // Fallback detection: after 5 seconds, if iframe seems blocked, show fallback
+      setTimeout(() => {
+        // Since we can't reliably detect cross-origin block, we show fallback if iframe hasn't loaded (but onload may fire even if blocked)
+        // We'll just provide a manual button always visible.
+        // The fallback is triggered by the 'error' event (below)
+      }, 5000);
     }
 
-    // ─── PLATFORM CLICK HANDLER ──────────────────────────────────
-    function showPlatform(platformKey) {
-      // If already active, we could deselect (toggle off) – but we'll keep it selected.
-      // If same platform clicked, do nothing (or we could hide and show products? We'll keep it as is).
-      if (activePlatform === platformKey) return;
-
-      activePlatform = platformKey;
-      const type = platformDisplayType[platformKey] || 'poster';
-      if (type === 'poster' || type === 'iframe') {
-        showContent('platform', platformKey);
-      }
-      updateActiveButton();
-      // Update section title to reflect platform
-      const plat = platformsList.find(p => p.key === platformKey);
-      if (plat) {
-        document.getElementById('sectionTitle').innerHTML = `${plat.label} · Live Store`;
-      }
+    function closePlatformOverlay() {
+      document.getElementById('platformOverlay').classList.remove('active');
+      document.getElementById('storeIframe').src = ''; // stop loading
     }
 
-    // ─── RESET TO PRODUCTS ────────────────────────────────────────
-    function resetToProducts() {
-      activePlatform = null;
-      showContent('products');
-      updateActiveButton();
-      document.getElementById('sectionTitle').innerHTML = `All Platforms · For You <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${document.querySelectorAll('.product-card').length} items</span>`;
+    // Open in new tab from top bar
+    document.getElementById('openInNewTabBtn').addEventListener('click', () => {
+      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
+    });
+
+    // Fallback button
+    function openInNewTabFromFallback() {
+      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
     }
 
-    // ─── UPDATE ACTIVE BUTTON ────────────────────────────────────
-    function updateActiveButton() {
-      document.querySelectorAll('.platform-filters .filter-btn').forEach(btn => {
-        btn.classList.remove('active-platform');
-        if (btn.dataset.platform === activePlatform) {
-          btn.classList.add('active-platform');
-        }
-      });
-    }
+    // Detect iframe load error and show fallback
+    const iframe = document.getElementById('storeIframe');
+    iframe.addEventListener('error', () => {
+      document.getElementById('iframeFallback').classList.add('active');
+    });
 
-    // ─── CATEGORY & SEARCH HANDLING ──────────────────────────────
-    window.switchCategory = (cat) => {
-      currentCategory = cat;
-      resetToProducts();
-      renderFilters();
-      renderProducts();
-    };
-
-    function handleSearch() {
-      if (activePlatform) {
-        resetToProducts();
-      }
-      renderProducts();
-    }
-
-    window.setSearch = (term) => {
-      document.getElementById('globalSearch').value = term;
-      handleSearch();
-    };
-
-    // ─── FILTERS RENDERING ──────────────────────────────────────
-    function renderFilters() {
-      const platContainer = document.getElementById('platformFilters');
-      platContainer.innerHTML = platformsList.map(p => {
-        const isKrayvo = p.key === 'krayvo';
-        return `<button class="filter-btn" data-platform="${p.key}" onclick="${isKrayvo ? 'showToast(\'KRAYVO products are already on the homepage\', \'info\')' : `showPlatform('${p.key}')`}">
-          <i class="${p.icon}"></i> ${p.label}
-        </button>`;
-      }).join('');
-
-      const catContainer = document.getElementById('categoryFilters');
-      const allCats = ['For You', ...categories];
-      catContainer.innerHTML = allCats.map(c =>
-        `<button class="filter-btn ${currentCategory === c ? 'active' : ''}" onclick="switchCategory('${c}')">${c}</button>`
-      ).join('');
-
-      updateActiveButton();
-    }
-
-    // ─── PRODUCT DATA & RENDERING ────────────────────────────────
+    // ========== PRODUCTS LOGIC (unchanged mostly) ==========
     const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
     const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
 
@@ -418,7 +187,8 @@
       }
     });
 
-    allProducts = [...DEMO_PRODUCTS];
+    let allProducts = [...DEMO_PRODUCTS];
+    let currentCategory = 'For You';
 
     function renderProducts() {
       const search = document.getElementById('globalSearch').value.toLowerCase().trim();
@@ -472,12 +242,35 @@
         `;
       }).join('');
 
-      if (!activePlatform) {
-        document.getElementById('sectionTitle').innerHTML = `All Platforms ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
-      }
+      document.getElementById('sectionTitle').innerHTML = `All Platforms ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
     }
 
-    // ─── OTHER FUNCTIONS ────────────────────────────────────────────
+    function renderFilters() {
+      const platContainer = document.getElementById('platformFilters');
+      platContainer.innerHTML = platformsList.map(p =>
+        `<button class="filter-btn" onclick="openPlatformOverlay('${p.key}', '${p.label}')">
+          <i class="${p.icon}"></i> ${p.label}
+        </button>`
+      ).join('');
+
+      const catContainer = document.getElementById('categoryFilters');
+      const allCats = ['For You', ...categories];
+      catContainer.innerHTML = allCats.map(c =>
+        `<button class="filter-btn ${currentCategory === c ? 'active' : ''}" onclick="switchCategory('${c}')">${c}</button>`
+      ).join('');
+    }
+
+    window.switchCategory = (cat) => {
+      currentCategory = cat;
+      renderFilters();
+      renderProducts();
+    };
+
+    window.setSearch = (term) => {
+      document.getElementById('globalSearch').value = term;
+      renderProducts();
+    };
+
     window.toggleWishlist = (pid) => {
       let wishlist = JSON.parse(localStorage.getItem('krayvo_wishlist')) || [];
       if (wishlist.includes(pid)) {
@@ -490,7 +283,7 @@
       localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
     };
 
-    // ─── SYNC FIRESTORE ──────────────────────────────────────────
+    // Sync Firestore
     db.collection('products').orderBy('createdAt', 'desc').get().then(snap => {
       if (!snap.empty) {
         const firestoreProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -505,11 +298,8 @@
       }
     }).catch(() => console.log('Using demo data'));
 
-    // ─── INIT ──────────────────────────────────────────────────────
     renderFilters();
     renderProducts();
-    // Ensure product grid is visible initially
-    showContent('products');
   </script>
 </body>
 </html>
