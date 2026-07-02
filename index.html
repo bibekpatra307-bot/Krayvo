@@ -89,14 +89,14 @@
       <button class="back-btn" onclick="closePlatformOverlay()">✕</button>
       <span class="title" id="overlayTitle">Official Store</span>
       <div class="actions">
-        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open in New Tab</button>
+        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open Directly</button>
       </div>
     </div>
     <div class="iframe-area">
       <iframe id="storeIframe" src="" title="Official Store"></iframe>
       <div class="iframe-fallback" id="iframeFallback">
-        <h3>⚠️ This store cannot be displayed here</h3>
-        <p style="color:var(--text-muted);">Security settings prevent embedding. Please open in a new tab.</p>
+        <h3>⚠️ Unable to load via proxy</h3>
+        <p style="color:var(--text-muted);">The store may be blocking access. Please open directly.</p>
         <button class="btn btn-primary" onclick="openInNewTabFromFallback()">Open in New Tab</button>
       </div>
     </div>
@@ -120,7 +120,7 @@
 
     let currentPlatformUrl = '';
 
-    // Open platform overlay
+    // Open platform overlay using PROXY
     function openPlatformOverlay(platformKey, label) {
       const plat = platformsList.find(p => p.key === platformKey);
       if (!plat || !plat.url || plat.url === '#') {
@@ -129,40 +129,40 @@
       }
       currentPlatformUrl = plat.url;
       document.getElementById('overlayTitle').textContent = label + ' Official Store';
-      document.getElementById('storeIframe').src = plat.url;
+
+      // USING CORS PROXY – try to fetch the site
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(plat.url);
+      document.getElementById('storeIframe').src = proxyUrl;
       document.getElementById('iframeFallback').classList.remove('active');
       document.getElementById('platformOverlay').classList.add('active');
 
-      // Fallback detection: after 5 seconds, if iframe seems blocked, show fallback
+      // Fallback: if iframe fails or shows empty, after 8 sec show fallback
       setTimeout(() => {
-        // Since we can't reliably detect cross-origin block, we show fallback if iframe hasn't loaded (but onload may fire even if blocked)
-        // We'll just provide a manual button always visible.
-        // The fallback is triggered by the 'error' event (below)
-      }, 5000);
+        const iframe = document.getElementById('storeIframe');
+        // Try to detect if content loaded? Not reliable. We'll just enable the fallback if still on same proxy? 
+        // But we'll show fallback only if user manually clicks? Instead, we'll add a manual button always visible (Open Directly).
+        // The fallback message will be shown after timeout if the user hasn't closed it.
+        if (document.getElementById('platformOverlay').classList.contains('active')) {
+          // You can optionally show a small hint, but we won't force it.
+        }
+      }, 8000);
     }
 
     function closePlatformOverlay() {
       document.getElementById('platformOverlay').classList.remove('active');
-      document.getElementById('storeIframe').src = ''; // stop loading
+      document.getElementById('storeIframe').src = '';
     }
 
-    // Open in new tab from top bar
+    // Open in new tab directly (bypass proxy)
     document.getElementById('openInNewTabBtn').addEventListener('click', () => {
       if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
     });
 
-    // Fallback button
     function openInNewTabFromFallback() {
       if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
     }
 
-    // Detect iframe load error and show fallback
-    const iframe = document.getElementById('storeIframe');
-    iframe.addEventListener('error', () => {
-      document.getElementById('iframeFallback').classList.add('active');
-    });
-
-    // ========== PRODUCTS LOGIC (unchanged mostly) ==========
+    // ========== PRODUCTS LOGIC (unchanged) ==========
     const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
     const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
 
