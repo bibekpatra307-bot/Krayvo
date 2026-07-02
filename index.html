@@ -37,7 +37,7 @@
     .overlay-top-bar .title { font-weight: 600; }
     .overlay-top-bar .actions { display: flex; gap: 8px; }
     .iframe-area {
-      flex: 1; position: relative; background: white;
+      flex: 1; position: relative; background: white; /* iframe background */
     }
     .iframe-area iframe {
       width: 100%; height: 100%; border: none;
@@ -46,6 +46,7 @@
       display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--card); flex-direction: column; align-items: center; justify-content: center;
       padding: 20px; text-align: center;
+      z-index: 2;
     }
     .iframe-fallback.active { display: flex; }
   </style>
@@ -83,20 +84,20 @@
     <div class="product-grid" id="productGrid"></div>
   </main>
 
-  <!-- Platform Overlay (hidden by default) -->
+  <!-- Platform Overlay -->
   <div class="platform-overlay" id="platformOverlay">
     <div class="overlay-top-bar">
       <button class="back-btn" onclick="closePlatformOverlay()">✕</button>
       <span class="title" id="overlayTitle">Official Store</span>
       <div class="actions">
-        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open Directly</button>
+        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open in New Tab</button>
       </div>
     </div>
     <div class="iframe-area">
       <iframe id="storeIframe" src="" title="Official Store"></iframe>
       <div class="iframe-fallback" id="iframeFallback">
-        <h3>⚠️ Unable to load via proxy</h3>
-        <p style="color:var(--text-muted);">The store may be blocking access. Please open directly.</p>
+        <h3>⚠️ This store cannot be displayed here</h3>
+        <p style="color:var(--text-muted);">Security settings prevent embedding. Please open in a new tab.</p>
         <button class="btn btn-primary" onclick="openInNewTabFromFallback()">Open in New Tab</button>
       </div>
     </div>
@@ -107,7 +108,7 @@
   <script src="js/firebase.js"></script>
   <script src="js/script.js"></script>
   <script>
-    // Platform data and URLs
+    // Platform data with official URLs
     const platformsList = [
       { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
       { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
@@ -119,41 +120,39 @@
     ];
 
     let currentPlatformUrl = '';
+    let overlayTimeout;
 
-    // Open platform overlay using PROXY
+    // Open overlay with direct iframe
     function openPlatformOverlay(platformKey, label) {
       const plat = platformsList.find(p => p.key === platformKey);
       if (!plat || !plat.url || plat.url === '#') {
-        showToast('KRAYVO products are already on the homepage', 'info');
+        showToast('KRAYVO products are already on the homepage');
         return;
       }
       currentPlatformUrl = plat.url;
       document.getElementById('overlayTitle').textContent = label + ' Official Store';
-
-      // USING CORS PROXY – try to fetch the site
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(plat.url);
-      document.getElementById('storeIframe').src = proxyUrl;
+      const iframe = document.getElementById('storeIframe');
+      iframe.src = plat.url; // direct URL, no proxy
       document.getElementById('iframeFallback').classList.remove('active');
       document.getElementById('platformOverlay').classList.add('active');
 
-      // Fallback: if iframe fails or shows empty, after 8 sec show fallback
-      setTimeout(() => {
-        const iframe = document.getElementById('storeIframe');
-        // Try to detect if content loaded? Not reliable. We'll just enable the fallback if still on same proxy? 
-        // But we'll show fallback only if user manually clicks? Instead, we'll add a manual button always visible (Open Directly).
-        // The fallback message will be shown after timeout if the user hasn't closed it.
+      // Fallback: after 8 seconds, if iframe still blank (likely blocked), show fallback message
+      clearTimeout(overlayTimeout);
+      overlayTimeout = setTimeout(() => {
+        // Show fallback only if overlay is still open and no user interaction
         if (document.getElementById('platformOverlay').classList.contains('active')) {
-          // You can optionally show a small hint, but we won't force it.
+          document.getElementById('iframeFallback').classList.add('active');
         }
       }, 8000);
     }
 
     function closePlatformOverlay() {
       document.getElementById('platformOverlay').classList.remove('active');
-      document.getElementById('storeIframe').src = '';
+      document.getElementById('storeIframe').src = ''; // stop loading
+      clearTimeout(overlayTimeout);
     }
 
-    // Open in new tab directly (bypass proxy)
+    // "Open in New Tab" button click
     document.getElementById('openInNewTabBtn').addEventListener('click', () => {
       if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
     });
@@ -162,7 +161,7 @@
       if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
     }
 
-    // ========== PRODUCTS LOGIC (unchanged) ==========
+    // ========== PRODUCTS LOGIC (fully restored) ==========
     const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
     const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
 
@@ -298,6 +297,7 @@
       }
     }).catch(() => console.log('Using demo data'));
 
+    // Initial render
     renderFilters();
     renderProducts();
   </script>
