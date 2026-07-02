@@ -1,377 +1,518 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Platform Mirror</title>
-    <style>
-        /* ── Reset & Base ── */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f1f3f6;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>KRAYVO | Discover Across Marketplaces</title>
+  <meta name="description" content="Shop premium products from KRAYVO, Amazon, Flipkart, Myntra, and more. Compare, save, and get the best deals.">
+  <meta property="og:title" content="KRAYVO — Multi‑Marketplace Discovery">
+  <meta property="og:description" content="One platform, endless deals. Explore fashion, electronics, mobiles, beauty & more.">
+  <meta property="og:image" content="https://bibekpatra307-bot.github.io/Krayvo/images/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://bibekpatra307-bot.github.io/Krayvo/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* ── Platform Poster Styles ── */
+    #posterContainer {
+      display: none;
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 40px;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    #posterContainer:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .poster {
+      display: none;
+      width: 100%;
+      background: #f8fafc;
+    }
+    .poster.active {
+      display: block;
+    }
+    .poster-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    /* poster header */
+    .poster-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #eaeef2;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .poster-logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .poster-logo i {
+      font-size: 2rem;
+    }
+    .poster-search {
+      flex: 1 1 300px;
+      background: #f1f3f6;
+      border-radius: 40px;
+      padding: 10px 20px;
+      color: #5f6c80;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .poster-search i {
+      color: #aaa;
+    }
+    .poster-search span {
+      color: #777;
+    }
+    .poster-nav {
+      display: flex;
+      gap: 16px;
+      font-size: 0.9rem;
+      color: #1e2a3a;
+      padding: 12px 0;
+      border-bottom: 1px solid #eaeef2;
+      flex-wrap: wrap;
+    }
+    .poster-nav span {
+      padding: 4px 0;
+    }
+    .poster-banner {
+      margin: 20px 0;
+      height: 160px;
+      background: linear-gradient(135deg, #e0e7ef, #cbd5e1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1e2a3a;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    .poster-products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin: 20px 0 30px;
+    }
+    .poster-product {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      text-align: center;
+    }
+    .poster-product .img-placeholder {
+      height: 100px;
+      background: #eef2f7;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .poster-product .title {
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin: 4px 0;
+    }
+    .poster-product .price {
+      color: #1e2a3a;
+      font-weight: 600;
+    }
+    .poster-footer {
+      border-top: 1px solid #eaeef2;
+      padding: 20px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: #5f6c80;
+      font-size: 0.8rem;
+    }
+    .poster-footer .links {
+      display: flex;
+      gap: 20px;
+    }
+    .poster-click-hint {
+      text-align: center;
+      padding: 10px 0 4px;
+      font-size: 0.85rem;
+      color: #6366f1;
+      font-weight: 500;
+    }
+    .poster-click-hint i {
+      margin-right: 6px;
+    }
 
-        /* ── Card Container ── */
-        .mirror-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            max-width: 1300px;
-            width: 100%;
-        }
+    /* platform-specific colors */
+    .poster-amazon .poster-logo { color: #ff9900; }
+    .poster-amazon .poster-banner { background: linear-gradient(135deg, #232f3e, #131a22); color: #fff; }
+    .poster-flipkart .poster-logo { color: #2874f0; }
+    .poster-flipkart .poster-banner { background: linear-gradient(135deg, #1a3c7a, #2874f0); color: #fff; }
+    .poster-myntra .poster-logo { color: #e91e63; }
+    .poster-myntra .poster-banner { background: linear-gradient(135deg, #ff3f6c, #e82e5a); color: #fff; }
+    .poster-savana .poster-logo { color: #2e7d32; }
+    .poster-savana .poster-banner { background: linear-gradient(135deg, #1b3b2b, #2a5a3f); color: #fff; }
+    .poster-ajio .poster-logo { color: #f97316; }
+    .poster-ajio .poster-banner { background: linear-gradient(135deg, #1a1a1a, #2d2d2d); color: #fff; }
+    .poster-meesho .poster-logo { color: #f54d2e; }
+    .poster-meesho .poster-banner { background: linear-gradient(135deg, #d43b1f, #f54d2e); color: #fff; }
 
-        .mirror-card {
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #eaeef2;
-        }
-        .mirror-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
-        }
+    /* active platform button glow */
+    .filter-btn.active-platform {
+      border: 2px solid #6366f1;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
+      transform: scale(1.05);
+      background: var(--primary-light);
+    }
 
-        .card-preview {
-            height: 180px;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.2rem;
-            font-weight: 700;
-            position: relative;
-            overflow: hidden;
-        }
-        .card-preview .badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.65);
-            color: #fff;
-            font-size: 0.6rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 30px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .card-preview .platform-icon {
-            font-size: 2.8rem;
-            opacity: 0.9;
-        }
-
-        .card-body {
-            padding: 20px 24px 24px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .card-body h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .card-body .sub {
-            font-size: 0.85rem;
-            color: #5f6c80;
-            margin-bottom: 12px;
-        }
-        .card-body .desc {
-            font-size: 0.92rem;
-            color: #1e2a3a;
-            line-height: 1.5;
-            margin-bottom: 16px;
-            flex: 1;
-        }
-        .card-body .action-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .card-body .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
-            text-decoration: none;
-            background: #f0f2f5;
-            color: #1e2a3a;
-        }
-        .card-body .btn-primary {
-            background: #6366f1;
-            color: #fff;
-        }
-        .card-body .btn-primary:hover {
-            background: #4f46e5;
-            transform: scale(1.02);
-        }
-        .card-body .btn-outline {
-            background: transparent;
-            border: 2px solid #d0d7e2;
-            color: #2d3a4f;
-        }
-        .card-body .btn-outline:hover {
-            background: #f0f4fa;
-        }
-        .card-body .btn .icon {
-            font-size: 1rem;
-        }
-
-        /* ── Platform-specific preview colours ── */
-        .preview-amazon {
-            background: linear-gradient(145deg, #131a22, #232f3e);
-            color: #fff;
-        }
-        .preview-amazon .platform-icon {
-            color: #ff9900;
-        }
-        .preview-amazon .badge {
-            background: #ff9900;
-            color: #131a22;
-        }
-
-        .preview-myntra {
-            background: linear-gradient(145deg, #ff3f6c, #e82e5a);
-            color: #fff;
-        }
-        .preview-myntra .platform-icon {
-            color: #fff;
-        }
-        .preview-myntra .badge {
-            background: #fff;
-            color: #ff3f6c;
-        }
-
-        .preview-ajio {
-            background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
-            color: #fff;
-        }
-        .preview-ajio .platform-icon {
-            color: #ff6b00;
-        }
-        .preview-ajio .badge {
-            background: #ff6b00;
-            color: #1a1a1a;
-        }
-
-        .preview-meesho {
-            background: linear-gradient(145deg, #f54d2e, #d43b1f);
-            color: #fff;
-        }
-        .preview-meesho .platform-icon {
-            color: #ffc107;
-        }
-        .preview-meesho .badge {
-            background: #ffc107;
-            color: #d43b1f;
-        }
-
-        .preview-savana {
-            background: linear-gradient(145deg, #1b3b2b, #2a5a3f);
-            color: #fff;
-        }
-        .preview-savana .platform-icon {
-            color: #8bc34a;
-        }
-        .preview-savana .badge {
-            background: #8bc34a;
-            color: #1b3b2b;
-        }
-
-        .preview-flipkart {
-            background: linear-gradient(145deg, #1a3c7a, #2874f0);
-            color: #fff;
-        }
-        .preview-flipkart .platform-icon {
-            color: #f9c80e;
-        }
-        .preview-flipkart .badge {
-            background: #f9c80e;
-            color: #1a3c7a;
-        }
-
-        /* ── Info note ── */
-        .info-note {
-            grid-column: 1 / -1;
-            background: #eef2f7;
-            border-radius: 16px;
-            padding: 20px 28px;
-            color: #1e2a3a;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            border-left: 5px solid #6366f1;
-        }
-        .info-note strong {
-            color: #1e293b;
-        }
-        .info-note .highlight {
-            background: #6366f1;
-            color: #fff;
-            padding: 2px 10px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            .mirror-grid {
-                grid-template-columns: 1fr;
-            }
-            .card-preview {
-                height: 140px;
-            }
-            .card-body .action-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .card-body .btn {
-                justify-content: center;
-            }
-        }
-    </style>
+    /* responsive tweaks */
+    @media (max-width: 640px) {
+      .poster-products {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .poster-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="app-header"></div>
+  
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1>Discover the Best Deals Across Every Store</h1>
+      <p>KRAYVO brings together KRAYVO Originals, Amazon, Flipkart, Myntra, and more – compare, save, and shop in one place.</p>
+      <div class="search-wrapper">
+        <input type="text" id="globalSearch" placeholder="Search products, brands, categories..." oninput="handleSearch()">
+      </div>
+      <div class="trending-searches">
+        <span>Trending: </span>
+        <a onclick="setSearch('iPhone')">iPhone</a>,
+        <a onclick="setSearch('Shoes')">Shoes</a>,
+        <a onclick="setSearch('Saree')">Saree</a>
+      </div>
+    </section>
 
-    <div class="mirror-grid">
-
-        <!-- ─── INFO NOTE ─── -->
-        <div class="info-note">
-            <strong>📦 Fake / Mirror Homepages</strong> &nbsp;—&nbsp; These pages are <strong>visual shells</strong> that look like the real platform.
-            <span class="highlight">Click anywhere</span> on any fake page &rarr; opens the <strong>real website</strong> in a new tab.
-            <br /><span style="font-size:0.85rem; color:#5f6c80; display:inline-block; margin-top:6px;">
-                ✅ Use these URLs inside your KRAYVO iframe overlay for platforms that block embedding (Amazon, Myntra, Ajio, Meesho).
-            </span>
-        </div>
-
-        <!-- ─── AMAZON ─── -->
-        <a href="amazon-fake.html" target="_blank" class="mirror-card">
-            <div class="card-preview preview-amazon">
-                <span class="platform-icon">&#xf270;</span>
-                <span class="badge">iframe blocked</span>
-            </div>
-            <div class="card-body">
-                <h3>Amazon</h3>
-                <div class="sub">Fake homepage · click → real site</div>
-                <div class="desc">Full Amazon homepage replica with header, search, banners, product grid &amp; footer. Any click opens <strong>amazon.in</strong> in a new tab.</div>
-                <div class="action-row">
-                    <span class="btn btn-primary">&#xf35d; Open Fake Page</span>
-                    <span class="btn btn-outline">&#xf08e; amazon.in</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- ─── MYNTRA ─── -->
-        <a href="myntra-fake.html" target="_blank" class="mirror-card">
-            <div class="card-preview preview-myntra">
-                <span class="platform-icon">&#xf290;</span>
-                <span class="badge">iframe blocked</span>
-            </div>
-            <div class="card-body">
-                <h3>Myntra</h3>
-                <div class="sub">Fake homepage · click → real site</div>
-                <div class="desc">Fashion-forward replica with Myntra's signature pink header, category nav, hero banner and trendy product grid. Click anywhere opens <strong>myntra.com</strong>.</div>
-                <div class="action-row">
-                    <span class="btn btn-primary">&#xf35d; Open Fake Page</span>
-                    <span class="btn btn-outline">&#xf08e; myntra.com</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- ─── AJIO ─── -->
-        <a href="ajio-fake.html" target="_blank" class="mirror-card">
-            <div class="card-preview preview-ajio">
-                <span class="platform-icon">&#xf291;</span>
-                <span class="badge">iframe blocked</span>
-            </div>
-            <div class="card-body">
-                <h3>Ajio</h3>
-                <div class="sub">Fake homepage · click → real site</div>
-                <div class="desc">Dark &amp; bold Ajio-style homepage with orange accents, category tiles, hero banner and fashion product grid. Any click opens <strong>ajio.com</strong> in a new tab.</div>
-                <div class="action-row">
-                    <span class="btn btn-primary">&#xf35d; Open Fake Page</span>
-                    <span class="btn btn-outline">&#xf08e; ajio.com</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- ─── MEESHO ─── -->
-        <a href="meesho-fake.html" target="_blank" class="mirror-card">
-            <div class="card-preview preview-meesho">
-                <span class="platform-icon">&#xf3e0;</span>
-                <span class="badge">iframe blocked</span>
-            </div>
-            <div class="card-body">
-                <h3>Meesho</h3>
-                <div class="sub">Fake homepage · click → real site</div>
-                <div class="desc">Vibrant Meesho-style replica with red/orange header, category grid, hero banner and budget-friendly product cards. Click anywhere opens <strong>meesho.com</strong>.</div>
-                <div class="action-row">
-                    <span class="btn btn-primary">&#xf35d; Open Fake Page</span>
-                    <span class="btn btn-outline">&#xf08e; meesho.com</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- ─── SAVANA ─── (works in iframe, but we include for reference) ─── -->
-        <a href="savana-fake.html" target="_blank" class="mirror-card" style="opacity:0.7;">
-            <div class="card-preview preview-savana">
-                <span class="platform-icon">&#xf06c;</span>
-                <span class="badge" style="background:#8bc34a;color:#1b3b2b;">iframe OK</span>
-            </div>
-            <div class="card-body">
-                <h3>Savana</h3>
-                <div class="sub">Fake page (optional)</div>
-                <div class="desc">Green-themed Savana-style replica. Click anywhere opens <strong>savana.com</strong> in a new tab. (Savana already works in iframe, but this is provided for consistency.)</div>
-                <div class="action-row">
-                    <span class="btn btn-outline">&#xf35d; Open Fake</span>
-                    <span class="btn btn-outline">&#xf08e; savana.com</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- ─── FLIPKART ─── (works in iframe, reference) ─── -->
-        <a href="flipkart-fake.html" target="_blank" class="mirror-card" style="opacity:0.7;">
-            <div class="card-preview preview-flipkart">
-                <span class="platform-icon">&#xf07a;</span>
-                <span class="badge" style="background:#f9c80e;color:#1a3c7a;">iframe OK</span>
-            </div>
-            <div class="card-body">
-                <h3>Flipkart</h3>
-                <div class="sub">Fake page (optional)</div>
-                <div class="desc">Blue Flipkart-style homepage with search, categories, hero banner and product grid. Click anywhere opens <strong>flipkart.com</strong>. (Flipkart works in iframe already.)</div>
-                <div class="action-row">
-                    <span class="btn btn-outline">&#xf35d; Open Fake</span>
-                    <span class="btn btn-outline">&#xf08e; flipkart.com</span>
-                </div>
-            </div>
-        </a>
-
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="platform-filters" id="platformFilters"></div>
+      <div class="category-filters" id="categoryFilters"></div>
     </div>
 
+    <!-- Products Header -->
+    <div class="products-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h2 id="sectionTitle">All Platforms · For You</h2>
+      <span style="color:var(--text-muted);">Live prices · Instant updates</span>
+    </div>
+
+    <!-- Product Grid (default) -->
+    <div class="product-grid" id="productGrid"></div>
+
+    <!-- Poster Container (hidden by default) -->
+    <div id="posterContainer">
+      <!-- Posters will be injected by JavaScript -->
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="js/firebase.js"></script>
+  <script src="js/script.js"></script>
+  <script>
+    // ─── PLATFORM DATA ──────────────────────────────────────────────
+    const platformsList = [
+      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0', url: 'https://www.flipkart.com' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63', url: 'https://www.myntra.com' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32', url: 'https://www.savana.com' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316', url: 'https://www.ajio.com' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://www.meesho.com' }
+    ];
+
+    // ─── STATE ──────────────────────────────────────────────────────
+    let activePlatform = null;          // 'amazon', 'flipkart', etc.
+    let allProducts = [];
+    let currentCategory = 'For You';
+
+    // ─── GENERATE POSTER HTML FOR EACH PLATFORM ────────────────────
+    function getPosterHTML(platformKey) {
+      const plat = platformsList.find(p => p.key === platformKey);
+      if (!plat) return '';
+      const label = plat.label;
+      const icon = plat.icon;
+      const color = plat.color;
+      // Dummy product items
+      const dummyItems = Array.from({ length: 8 }, (_, i) => `
+        <div class="poster-product">
+          <div class="img-placeholder" style="background:#eef2f7;"></div>
+          <div class="title">${label} Item ${i+1}</div>
+          <div class="price">₹${Math.floor(Math.random()*5000+500)}</div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="poster poster-${platformKey}" data-platform="${platformKey}">
+          <div class="poster-inner">
+            <!-- header -->
+            <div class="poster-header">
+              <div class="poster-logo"><i class="${icon}" style="color:${color};"></i> ${label}</div>
+              <div class="poster-search"><i class="fas fa-search"></i> <span>Search ${label}...</span></div>
+              <div><i class="fas fa-user"></i> <i class="fas fa-shopping-cart" style="margin-left:12px;"></i></div>
+            </div>
+            <!-- nav -->
+            <div class="poster-nav">
+              <span>Electronics</span> <span>Fashion</span> <span>Home</span>
+              <span>Beauty</span> <span>Mobiles</span> <span>Books</span>
+            </div>
+            <!-- banner -->
+            <div class="poster-banner">
+              <span>🔥 Big ${label} Sale – Up to 70% Off</span>
+            </div>
+            <!-- product grid -->
+            <div class="poster-products">
+              ${dummyItems}
+            </div>
+            <!-- footer -->
+            <div class="poster-footer">
+              <div class="links">
+                <span>About</span> <span>Contact</span> <span>Terms</span> <span>Privacy</span>
+              </div>
+              <span>© 2026 ${label} – All rights reserved</span>
+            </div>
+            <div class="poster-click-hint"><i class="fas fa-external-link-alt"></i> Click anywhere to visit ${label}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── INIT POSTERS ──────────────────────────────────────────────
+    function initPosters() {
+      const container = document.getElementById('posterContainer');
+      container.innerHTML = platformsList
+        .filter(p => p.key !== 'krayvo')  // skip KRAYVO (already on page)
+        .map(p => getPosterHTML(p.key))
+        .join('');
+      // click handler for the whole container
+      container.addEventListener('click', (e) => {
+        if (activePlatform) {
+          const plat = platformsList.find(p => p.key === activePlatform);
+          if (plat && plat.url && plat.url !== '#') {
+            window.open(plat.url, '_blank');
+          }
+        }
+      });
+    }
+    initPosters();
+
+    // ─── SHOW / HIDE POSTER ──────────────────────────────────────
+    function showPlatformPoster(platformKey) {
+      // If already active, do nothing (or toggle off? we'll keep it)
+      if (activePlatform === platformKey) return;
+
+      // Hide product grid, show poster container
+      document.getElementById('productGrid').style.display = 'none';
+      document.getElementById('posterContainer').style.display = 'block';
+
+      // Hide all posters, then show the selected one
+      document.querySelectorAll('.poster').forEach(el => el.classList.remove('active'));
+      const target = document.querySelector(`.poster[data-platform="${platformKey}"]`);
+      if (target) target.classList.add('active');
+
+      activePlatform = platformKey;
+      updateActiveButton();
+    }
+
+    function hidePosterAndShowProducts() {
+      document.getElementById('posterContainer').style.display = 'none';
+      document.getElementById('productGrid').style.display = 'grid';
+      activePlatform = null;
+      updateActiveButton();
+    }
+
+    // ─── UPDATE ACTIVE BUTTON ──────────────────────────────────────
+    function updateActiveButton() {
+      document.querySelectorAll('.platform-filters .filter-btn').forEach(btn => {
+        btn.classList.remove('active-platform');
+        if (btn.dataset.platform === activePlatform) {
+          btn.classList.add('active-platform');
+        }
+      });
+    }
+
+    // ─── CATEGORY / SEARCH HANDLING ──────────────────────────────
+    window.switchCategory = (cat) => {
+      currentCategory = cat;
+      hidePosterAndShowProducts();
+      renderFilters();
+      renderProducts();
+    };
+
+    function handleSearch() {
+      // If a poster is shown, hide it and show products
+      if (activePlatform) {
+        hidePosterAndShowProducts();
+      }
+      renderProducts();
+    }
+
+    window.setSearch = (term) => {
+      document.getElementById('globalSearch').value = term;
+      handleSearch();
+    };
+
+    // ─── OVERRIDE PLATFORM BUTTON CLICKS ──────────────────────────
+    // We keep the original openPlatformOverlay logic, but we'll replace it.
+    // We'll redefine the click handler in renderFilters.
+    function renderFilters() {
+      const platContainer = document.getElementById('platformFilters');
+      platContainer.innerHTML = platformsList.map(p => {
+        const isKrayvo = p.key === 'krayvo';
+        return `<button class="filter-btn" data-platform="${p.key}" onclick="${isKrayvo ? 'showToast(\'KRAYVO products are already on the homepage\', \'info\')' : `showPlatformPoster('${p.key}')`}">
+          <i class="${p.icon}"></i> ${p.label}
+        </button>`;
+      }).join('');
+
+      const catContainer = document.getElementById('categoryFilters');
+      const allCats = ['For You', ...categories];
+      catContainer.innerHTML = allCats.map(c =>
+        `<button class="filter-btn ${currentCategory === c ? 'active' : ''}" onclick="switchCategory('${c}')">${c}</button>`
+      ).join('');
+
+      updateActiveButton();
+    }
+
+    // ─── PRODUCT DATA & RENDERING (unchanged, except we use hidePoster on search) ──
+    const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
+    const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
+
+    const DEMO_PRODUCTS = [];
+    platformsList.forEach(plat => {
+      for(let i=1; i<=20; i++){
+        const cat = categories[i % categories.length];
+        const price = Math.floor(Math.random()*5000)+299;
+        const originalPrice = price + Math.floor(Math.random()*3000)+200;
+        DEMO_PRODUCTS.push({
+          id: `demo_${plat.key}_${i}`,
+          name: `${brandNames[plat.key]} ${cat} ${i}`,
+          brand: brandNames[plat.key],
+          price,
+          originalPrice,
+          category: cat,
+          platform: plat.key,
+          imageUrl: null,
+          affiliateLink: plat.key === 'krayvo' ? '#' : `https://www.${plat.key}.com`,
+          createdAt: new Date()
+        });
+      }
+    });
+
+    allProducts = [...DEMO_PRODUCTS];
+
+    function renderProducts() {
+      const search = document.getElementById('globalSearch').value.toLowerCase().trim();
+      let filtered = [...allProducts];
+
+      if(search) {
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(search) ||
+          (p.brand && p.brand.toLowerCase().includes(search)) ||
+          p.category.toLowerCase().includes(search)
+        );
+      }
+      
+      if(currentCategory !== 'For You') {
+        filtered = filtered.filter(p => p.category === currentCategory);
+      } else {
+        const recent = [...filtered].sort((a,b) => b.createdAt - a.createdAt).slice(0,12);
+        const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0,8);
+        filtered = [...recent, ...discounted].filter((v,i,a) => a.findIndex(t => t.id === v.id) === i);
+        if(filtered.length === 0) filtered = allProducts.slice(0,16);
+      }
+
+      const grid = document.getElementById('productGrid');
+      if(filtered.length === 0) {
+        grid.innerHTML = '<div class="no-products" style="grid-column:1/-1; text-align:center; padding:50px;">✨ No products found.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const imgSrc = getProductImage(p);
+        const discount = p.originalPrice ? Math.round((1 - p.price/p.originalPrice)*100) : 0;
+        const plat = platformsList.find(pl => pl.key === p.platform) || platformsList[0];
+        return `
+          <div class="card product-card">
+            <div class="product-img">
+              <a href="product.html?id=${p.id}"><img src="${imgSrc}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy"></a>
+              <span class="platform-badge"><i class="${plat.icon}"></i> ${plat.label}</span>
+              <button class="wishlist-btn" onclick="toggleWishlist('${p.id}')"><i class="far fa-heart"></i></button>
+            </div>
+            <div class="product-info">
+              <div class="brand">${p.brand || plat.label}</div>
+              <h3 class="name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+              <div class="price-row">
+                ${p.originalPrice ? `<span class="old-price">₹${p.originalPrice}</span>` : ''}
+                <span class="price">₹${p.price}</span>
+                ${discount > 0 ? `<span class="discount">${discount}% OFF</span>` : ''}
+              </div>
+              <a href="product.html?id=${p.id}" class="btn btn-primary btn-sm">View Deal →</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('sectionTitle').innerHTML = `All Platforms ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
+    }
+
+    // ─── OTHER FUNCTIONS ────────────────────────────────────────────
+    window.toggleWishlist = (pid) => {
+      let wishlist = JSON.parse(localStorage.getItem('krayvo_wishlist')) || [];
+      if (wishlist.includes(pid)) {
+        wishlist = wishlist.filter(id => id !== pid);
+        showToast('Removed from wishlist');
+      } else {
+        wishlist.push(pid);
+        showToast('Added to wishlist');
+      }
+      localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
+    };
+
+    // ─── SYNC FIRESTORE (unchanged) ──────────────────────────────
+    db.collection('products').orderBy('createdAt', 'desc').get().then(snap => {
+      if (!snap.empty) {
+        const firestoreProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const merged = [...DEMO_PRODUCTS];
+        firestoreProducts.forEach(fp => {
+          const idx = merged.findIndex(m => m.id === fp.id);
+          if (idx !== -1) merged[idx] = fp;
+          else merged.push(fp);
+        });
+        allProducts = merged;
+        renderProducts();
+      }
+    }).catch(() => console.log('Using demo data'));
+
+    // ─── INIT ──────────────────────────────────────────────────────
+    renderFilters();
+    renderProducts();
+  </script>
 </body>
 </html>
