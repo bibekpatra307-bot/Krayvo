@@ -17,7 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
-    /* Platform Overlay Styles */
+    /* ========== PLATFORM OVERLAY ========== */
     .platform-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--bg); z-index: 1000;
@@ -27,6 +27,7 @@
     .overlay-top-bar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
     .overlay-top-bar .back-btn {
       background: none; border: none; font-size: 1.2rem; cursor: pointer;
@@ -42,12 +43,51 @@
     .iframe-area iframe {
       width: 100%; height: 100%; border: none;
     }
-    .iframe-fallback {
+    .storefront-fallback {
       display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--card); flex-direction: column; align-items: center; justify-content: center;
-      padding: 20px; text-align: center;
+      background: var(--card); overflow-y: auto;
     }
-    .iframe-fallback.active { display: flex; }
+    .storefront-fallback.active { display: block; }
+    .storefront-content {
+      padding: 20px; max-width: 1200px; margin: 0 auto;
+    }
+    .sf-hero {
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      color: white; border-radius: 16px; padding: 40px 20px;
+      text-align: center; margin-bottom: 20px;
+    }
+    .sf-search {
+      max-width: 500px; margin: 20px auto;
+    }
+    .sf-search input {
+      width: 100%; padding: 12px 20px; border-radius: 40px;
+      border: none; outline: none; font-size: 1rem;
+    }
+    .sf-categories {
+      display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0;
+    }
+    .sf-category {
+      background: rgba(255,255,255,0.2); color: white;
+      padding: 8px 16px; border-radius: 20px; cursor: pointer;
+      font-weight: 500;
+    }
+    .sf-products {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px; margin-top: 20px;
+    }
+    .sf-card {
+      background: var(--bg); border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border); cursor: pointer; transition: var(--transition);
+    }
+    .sf-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .sf-card-img {
+      height: 150px; background: linear-gradient(45deg, #6366f1, #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 2rem;
+    }
+    .sf-card-body { padding: 12px; }
+    .sf-card-body h4 { margin: 0 0 8px; font-size: 0.95rem; }
+    .sf-card-body .price { color: var(--primary); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -83,7 +123,7 @@
     <div class="product-grid" id="productGrid"></div>
   </main>
 
-  <!-- Platform Overlay (hidden by default) -->
+  <!-- PLATFORM OVERLAY -->
   <div class="platform-overlay" id="platformOverlay">
     <div class="overlay-top-bar">
       <button class="back-btn" onclick="closePlatformOverlay()">✕</button>
@@ -94,11 +134,7 @@
     </div>
     <div class="iframe-area">
       <iframe id="storeIframe" src="" title="Official Store"></iframe>
-      <div class="iframe-fallback" id="iframeFallback">
-        <h3>⚠️ This store cannot be displayed here</h3>
-        <p style="color:var(--text-muted);">Security settings prevent embedding. Please open in a new tab.</p>
-        <button class="btn btn-primary" onclick="openInNewTabFromFallback()">Open in New Tab</button>
-      </div>
+      <div class="storefront-fallback" id="storefrontFallback"></div>
     </div>
   </div>
 
@@ -107,7 +143,7 @@
   <script src="js/firebase.js"></script>
   <script src="js/script.js"></script>
   <script>
-    // Platform data and URLs
+    // ========== PLATFORM DATA ==========
     const platformsList = [
       { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
       { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
@@ -118,51 +154,107 @@
       { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://www.meesho.com' }
     ];
 
-    let currentPlatformUrl = '';
+    let currentPlatformData = null;
+    let fallbackTimeout = null;
 
-    // Open platform overlay
+    // ========== OPEN OVERLAY ==========
     function openPlatformOverlay(platformKey, label) {
       const plat = platformsList.find(p => p.key === platformKey);
       if (!plat || !plat.url || plat.url === '#') {
-        showToast('KRAYVO products are already on the homepage', 'info');
+        showToast('KRAYVO products are already on the homepage');
         return;
       }
-      currentPlatformUrl = plat.url;
+      currentPlatformData = plat;
       document.getElementById('overlayTitle').textContent = label + ' Official Store';
-      document.getElementById('storeIframe').src = plat.url;
-      document.getElementById('iframeFallback').classList.remove('active');
+      const iframe = document.getElementById('storeIframe');
+      const fallbackDiv = document.getElementById('storefrontFallback');
+      
+      // Reset states
+      iframe.style.display = 'block';
+      fallbackDiv.classList.remove('active');
+      fallbackDiv.innerHTML = '';
+      clearTimeout(fallbackTimeout);
+      
+      // Load iframe
+      iframe.src = plat.url;
       document.getElementById('platformOverlay').classList.add('active');
-
-      // Fallback detection: after 5 seconds, if iframe seems blocked, show fallback
-      setTimeout(() => {
-        // Since we can't reliably detect cross-origin block, we show fallback if iframe hasn't loaded (but onload may fire even if blocked)
-        // We'll just provide a manual button always visible.
-        // The fallback is triggered by the 'error' event (below)
+      
+      // Fallback detection: after 5 seconds, show storefront if iframe likely blocked
+      fallbackTimeout = setTimeout(() => {
+        if (document.getElementById('platformOverlay').classList.contains('active')) {
+          // Show fallback storefront
+          iframe.style.display = 'none';
+          fallbackDiv.classList.add('active');
+          renderStorefront(plat);
+        }
       }, 5000);
     }
 
     function closePlatformOverlay() {
       document.getElementById('platformOverlay').classList.remove('active');
-      document.getElementById('storeIframe').src = ''; // stop loading
+      document.getElementById('storeIframe').src = '';
+      clearTimeout(fallbackTimeout);
     }
 
-    // Open in new tab from top bar
+    // "Open in New Tab" button
     document.getElementById('openInNewTabBtn').addEventListener('click', () => {
-      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
+      if (currentPlatformData && currentPlatformData.url) {
+        window.open(currentPlatformData.url, '_blank', 'noopener');
+      }
     });
 
-    // Fallback button
-    function openInNewTabFromFallback() {
-      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
+    // ========== STOREFRONT FALLBACK UI ==========
+    function renderStorefront(plat) {
+      const container = document.getElementById('storefrontFallback');
+      // Generate a premium placeholder storefront for blocked platforms
+      const brandColor = plat.color;
+      const categories = ['Fashion', 'Electronics', 'Mobiles', 'Home', 'Beauty', 'Books'];
+      const dummyProducts = Array.from({length: 8}, (_, i) => ({
+        name: `${plat.label} Product ${i+1}`,
+        price: `₹${Math.floor(Math.random()*5000)+299}`
+      }));
+      
+      container.innerHTML = `
+        <div class="storefront-content" onclick="openOfficialStore()">
+          <div class="sf-hero" style="background: linear-gradient(135deg, ${brandColor}, ${adjustColor(brandColor, -20)})">
+            <h2>${plat.label} Storefront</h2>
+            <p>Explore deals, trending products, and more</p>
+            <div class="sf-search">
+              <input type="text" placeholder="Search ${plat.label}..." onclick="event.stopPropagation(); openOfficialStore()">
+            </div>
+            <div class="sf-categories">
+              ${categories.map(cat => `<span class="sf-category" onclick="event.stopPropagation(); openOfficialStore()">${cat}</span>`).join('')}
+            </div>
+          </div>
+          <div class="sf-products">
+            ${dummyProducts.map(p => `
+              <div class="sf-card" onclick="event.stopPropagation(); openOfficialStore()">
+                <div class="sf-card-img">🛍️</div>
+                <div class="sf-card-body">
+                  <h4>${p.name}</h4>
+                  <div class="price">${p.price}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <p style="text-align:center; margin:20px 0; color:var(--text-muted);">Click anywhere to visit ${plat.label} official website</p>
+        </div>
+      `;
     }
 
-    // Detect iframe load error and show fallback
-    const iframe = document.getElementById('storeIframe');
-    iframe.addEventListener('error', () => {
-      document.getElementById('iframeFallback').classList.add('active');
-    });
+    function openOfficialStore() {
+      if (currentPlatformData && currentPlatformData.url) {
+        window.open(currentPlatformData.url, '_blank', 'noopener');
+      }
+    }
 
-    // ========== PRODUCTS LOGIC (unchanged mostly) ==========
+    // Helper to darken/lighten color
+    function adjustColor(hex, percent) {
+      // simple: return darker shade for gradient
+      return hex; // just use same for now, gradient already defined
+    }
+
+    // ========== HOMEPAGE PRODUCTS (unchanged) ==========
     const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
     const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
 
@@ -283,7 +375,7 @@
       localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
     };
 
-    // Sync Firestore
+    // Firestore sync
     db.collection('products').orderBy('createdAt', 'desc').get().then(snap => {
       if (!snap.empty) {
         const firestoreProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -298,6 +390,7 @@
       }
     }).catch(() => console.log('Using demo data'));
 
+    // Initial render
     renderFilters();
     renderProducts();
   </script>
