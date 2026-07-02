@@ -1,1380 +1,518 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>KRAYVO | Discover Across Marketplaces</title>
-    <meta name="description" content="Shop premium products from KRAYVO, Amazon, Flipkart, Myntra, and more." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-        /* ───────────── RESET & VARIABLES ───────────── */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        :root {
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-            --radius: 16px;
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --font: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-        [data-theme="dark"] {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-        }
-        body {
-            font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
-            transition: background var(--transition), color var(--transition);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-        img {
-            max-width: 100%;
-            display: block;
-        }
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>KRAYVO | Discover Across Marketplaces</title>
+  <meta name="description" content="Shop premium products from KRAYVO, Amazon, Flipkart, Myntra, and more. Compare, save, and get the best deals.">
+  <meta property="og:title" content="KRAYVO — Multi‑Marketplace Discovery">
+  <meta property="og:description" content="One platform, endless deals. Explore fashion, electronics, mobiles, beauty & more.">
+  <meta property="og:image" content="https://bibekpatra307-bot.github.io/Krayvo/images/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://bibekpatra307-bot.github.io/Krayvo/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* ── Platform Poster Styles ── */
+    #posterContainer {
+      display: none;
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 40px;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    #posterContainer:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .poster {
+      display: none;
+      width: 100%;
+      background: #f8fafc;
+    }
+    .poster.active {
+      display: block;
+    }
+    .poster-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    /* poster header */
+    .poster-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #eaeef2;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .poster-logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .poster-logo i {
+      font-size: 2rem;
+    }
+    .poster-search {
+      flex: 1 1 300px;
+      background: #f1f3f6;
+      border-radius: 40px;
+      padding: 10px 20px;
+      color: #5f6c80;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .poster-search i {
+      color: #aaa;
+    }
+    .poster-search span {
+      color: #777;
+    }
+    .poster-nav {
+      display: flex;
+      gap: 16px;
+      font-size: 0.9rem;
+      color: #1e2a3a;
+      padding: 12px 0;
+      border-bottom: 1px solid #eaeef2;
+      flex-wrap: wrap;
+    }
+    .poster-nav span {
+      padding: 4px 0;
+    }
+    .poster-banner {
+      margin: 20px 0;
+      height: 160px;
+      background: linear-gradient(135deg, #e0e7ef, #cbd5e1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1e2a3a;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    .poster-products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin: 20px 0 30px;
+    }
+    .poster-product {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      text-align: center;
+    }
+    .poster-product .img-placeholder {
+      height: 100px;
+      background: #eef2f7;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .poster-product .title {
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin: 4px 0;
+    }
+    .poster-product .price {
+      color: #1e2a3a;
+      font-weight: 600;
+    }
+    .poster-footer {
+      border-top: 1px solid #eaeef2;
+      padding: 20px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: #5f6c80;
+      font-size: 0.8rem;
+    }
+    .poster-footer .links {
+      display: flex;
+      gap: 20px;
+    }
+    .poster-click-hint {
+      text-align: center;
+      padding: 10px 0 4px;
+      font-size: 0.85rem;
+      color: #6366f1;
+      font-weight: 500;
+    }
+    .poster-click-hint i {
+      margin-right: 6px;
+    }
 
-        /* ───────────── HEADER ───────────── */
-        .app-header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, 0.85);
-        }
-        [data-theme="dark"] .app-header {
-            background: rgba(15, 23, 42, 0.9);
-        }
-        .header-inner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .logo {
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .logo span {
-            color: var(--primary);
-        }
-        .logo i {
-            color: var(--primary);
-            font-size: 1.4rem;
-        }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .theme-toggle {
-            background: none;
-            border: 1px solid var(--border);
-            border-radius: 40px;
-            padding: 6px 12px;
-            cursor: pointer;
-            color: var(--text);
-            font-size: 0.85rem;
-            transition: var(--transition);
-        }
-        .theme-toggle:hover {
-            background: var(--border);
-        }
+    /* platform-specific colors */
+    .poster-amazon .poster-logo { color: #ff9900; }
+    .poster-amazon .poster-banner { background: linear-gradient(135deg, #232f3e, #131a22); color: #fff; }
+    .poster-flipkart .poster-logo { color: #2874f0; }
+    .poster-flipkart .poster-banner { background: linear-gradient(135deg, #1a3c7a, #2874f0); color: #fff; }
+    .poster-myntra .poster-logo { color: #e91e63; }
+    .poster-myntra .poster-banner { background: linear-gradient(135deg, #ff3f6c, #e82e5a); color: #fff; }
+    .poster-savana .poster-logo { color: #2e7d32; }
+    .poster-savana .poster-banner { background: linear-gradient(135deg, #1b3b2b, #2a5a3f); color: #fff; }
+    .poster-ajio .poster-logo { color: #f97316; }
+    .poster-ajio .poster-banner { background: linear-gradient(135deg, #1a1a1a, #2d2d2d); color: #fff; }
+    .poster-meesho .poster-logo { color: #f54d2e; }
+    .poster-meesho .poster-banner { background: linear-gradient(135deg, #d43b1f, #f54d2e); color: #fff; }
 
-        /* ───────────── HERO ───────────── */
-        .hero {
-            padding: 40px 0 24px;
-            text-align: center;
-        }
-        .hero h1 {
-            font-size: clamp(1.8rem, 4vw, 3rem);
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, var(--primary), #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .hero p {
-            color: var(--text-muted);
-            max-width: 640px;
-            margin: 8px auto 20px;
-            font-size: 1.05rem;
-        }
-        .search-wrapper {
-            max-width: 560px;
-            margin: 0 auto 12px;
-            position: relative;
-        }
-        .search-wrapper input {
-            width: 100%;
-            padding: 14px 20px 14px 48px;
-            border: 2px solid var(--border);
-            border-radius: 60px;
-            font-size: 1rem;
-            background: var(--card);
-            color: var(--text);
-            transition: var(--transition);
-            outline: none;
-        }
-        .search-wrapper input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-        }
-        .search-wrapper .search-icon {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-        .trending-searches {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        .trending-searches a {
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .trending-searches a:hover {
-            text-decoration: underline;
-        }
+    /* active platform button glow */
+    .filter-btn.active-platform {
+      border: 2px solid #6366f1;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
+      transform: scale(1.05);
+      background: var(--primary-light);
+    }
 
-        /* ───────────── PLATFORM BAR ───────────── */
-        .platform-bar {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 8px 0 16px;
-            scrollbar-width: thin;
-            -webkit-overflow-scrolling: touch;
-            flex-wrap: nowrap;
-        }
-        .platform-bar::-webkit-scrollbar {
-            height: 4px;
-        }
-        .platform-bar::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 8px;
-        }
-        .platform-btn {
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border: 2px solid var(--border);
-            border-radius: 60px;
-            background: var(--card);
-            color: var(--text);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all var(--transition);
-            white-space: nowrap;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-        }
-        .platform-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            border-color: var(--text-muted);
-        }
-        .platform-btn i {
-            font-size: 1.1rem;
-        }
-        .platform-btn.active {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-        }
-        .platform-btn .badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .platform-btn.active .badge {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        /* ───────────── CATEGORY TABS ───────────── */
-        .filters-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 12px;
-            padding: 4px 0 20px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 24px;
-            align-items: center;
-        }
-        .category-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .filter-btn {
-            padding: 6px 16px;
-            border: 1.5px solid var(--border);
-            border-radius: 40px;
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition);
-            white-space: nowrap;
-        }
-        .filter-btn:hover {
-            border-color: var(--text);
-            color: var(--text);
-        }
-        .filter-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-        }
-
-        /* ───────────── PRODUCTS HEADER ───────────── */
-        .products-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .products-header h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .products-header .count-badge {
-            background: var(--primary);
-            color: #fff;
-            padding: 2px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .products-header .live-tag {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            font-weight: 400;
-        }
-
-        /* ───────────── PRODUCT GRID ───────────── */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-        .product-grid.fade-out {
-            opacity: 0;
-            transform: translateY(8px);
-            pointer-events: none;
-        }
-        .product-grid.fade-in {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .product-card {
-            background: var(--card);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: all var(--transition);
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-        }
-        .product-img {
-            position: relative;
-            aspect-ratio: 1 / 1;
-            background: var(--bg);
-            overflow: hidden;
-        }
-        .product-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-        .product-card:hover .product-img img {
-            transform: scale(1.04);
-        }
-        .product-img .platform-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            color: #fff;
-            padding: 3px 12px;
-            border-radius: 40px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .product-img .wishlist-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text);
-            font-size: 0.9rem;
-        }
-        .product-img .wishlist-btn:hover {
-            background: #fff;
-            transform: scale(1.1);
-            color: #ef4444;
-        }
-        .product-info {
-            padding: 14px 16px 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .product-info .brand {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .product-info .name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .product-info .name a:hover {
-            color: var(--primary);
-        }
-        .price-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 2px;
-        }
-        .price-row .price {
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: var(--text);
-        }
-        .price-row .old-price {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-decoration: line-through;
-        }
-        .price-row .discount {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #10b981;
-            background: rgba(16, 185, 129, 0.12);
-            padding: 0 8px;
-            border-radius: 20px;
-        }
-        .product-info .btn-sm {
-            margin-top: 8px;
-            padding: 6px 16px;
-            font-size: 0.78rem;
-            align-self: flex-start;
-            border-radius: 40px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .product-info .btn-sm:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        /* ───────────── PLATFORM POSTER ───────────── */
-        .poster-wrapper {
-            display: none;
-            opacity: 0;
-            transform: scale(0.98);
-            transition: opacity 0.35s ease, transform 0.35s ease;
-            margin-bottom: 24px;
-        }
-        .poster-wrapper.active {
-            display: block;
-            opacity: 1;
-            transform: scale(1);
-        }
-        .poster-clickable {
-            position: relative;
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all var(--transition);
-            background: var(--card);
-        }
-        .poster-clickable:hover {
-            box-shadow: 0 16px 56px rgba(0, 0, 0, 0.12);
-            transform: translateY(-2px);
-        }
-        .poster-clickable .poster-overlay-label {
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            padding: 8px 24px;
-            border-radius: 60px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            pointer-events: none;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .poster-clickable:hover .poster-overlay-label {
-            opacity: 1;
-        }
-        .poster-clickable .poster-overlay-label i {
-            font-size: 0.9rem;
-        }
-
-        /* Poster inner – static mockup */
-        .poster-mockup {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        .poster-mockup .pm-header {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            flex-shrink: 0;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .poster-mockup .pm-header .pm-logo {
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .poster-mockup .pm-header .pm-logo i {
-            font-size: 1.2rem;
-        }
-        .poster-mockup .pm-header .pm-search {
-            flex: 1;
-            min-width: 120px;
-            max-width: 340px;
-            padding: 6px 14px;
-            border-radius: 40px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            background: rgba(0, 0, 0, 0.03);
-            font-size: 0.8rem;
-            color: #888;
-        }
-        .poster-mockup .pm-nav {
-            display: flex;
-            gap: 12px;
-            padding: 8px 20px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-            flex-shrink: 0;
-            flex-wrap: wrap;
-        }
-        .poster-mockup .pm-nav span {
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: #666;
-            padding: 2px 0;
-            border-bottom: 2px solid transparent;
-            cursor: default;
-        }
-        .poster-mockup .pm-banner {
-            flex: 1;
-            min-height: 40px;
-            margin: 12px 20px 8px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: rgba(255, 255, 255, 0.9);
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            position: relative;
-            overflow: hidden;
-            padding: 20px;
-        }
-        .poster-mockup .pm-banner .banner-text {
-            text-align: center;
-            z-index: 1;
-        }
-        .poster-mockup .pm-banner .banner-text small {
-            display: block;
-            font-weight: 400;
-            font-size: 0.7rem;
-            opacity: 0.8;
-            margin-top: 4px;
-        }
-        .poster-mockup .pm-products {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            padding: 8px 20px 16px;
-            flex-shrink: 0;
-        }
-        .poster-mockup .pm-products .pm-item {
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 8px;
-            aspect-ratio: 1 / 1.2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 6px;
-            font-size: 0.55rem;
-            color: #555;
-            text-align: center;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-        }
-        .poster-mockup .pm-products .pm-item i {
-            font-size: 1.4rem;
-            margin-bottom: 4px;
-            opacity: 0.6;
-        }
-        .poster-mockup .pm-footer {
-            padding: 8px 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.04);
-            display: flex;
-            gap: 16px;
-            font-size: 0.6rem;
-            color: #999;
-            flex-shrink: 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* ───────────── PLATFORM-SPECIFIC COLORS ───────────── */
-        .poster-amazon .pm-header {
-            background: #131921;
-            color: #fff;
-        }
-        .poster-amazon .pm-header .pm-logo {
-            color: #ff9900;
-        }
-        .poster-amazon .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-amazon .pm-banner {
-            background: linear-gradient(135deg, #232f3e, #131921);
-        }
-        .poster-amazon .pm-nav span {
-            color: #ccc;
-        }
-
-        .poster-flipkart .pm-header {
-            background: #2874f0;
-            color: #fff;
-        }
-        .poster-flipkart .pm-header .pm-logo {
-            color: #fff;
-        }
-        .poster-flipkart .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-flipkart .pm-banner {
-            background: linear-gradient(135deg, #2874f0, #1a5bb5);
-        }
-
-        .poster-myntra .pm-header {
-            background: #e91e63;
-            color: #fff;
-        }
-        .poster-myntra .pm-header .pm-logo {
-            color: #fff;
-        }
-        .poster-myntra .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-myntra .pm-banner {
-            background: linear-gradient(135deg, #e91e63, #ad1457);
-        }
-
-        .poster-savana .pm-header {
-            background: #2e7d32;
-            color: #fff;
-        }
-        .poster-savana .pm-header .pm-logo {
-            color: #a5d6a7;
-        }
-        .poster-savana .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-savana .pm-banner {
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-        }
-
-        .poster-ajio .pm-header {
-            background: #f97316;
-            color: #fff;
-        }
-        .poster-ajio .pm-header .pm-logo {
-            color: #fff;
-        }
-        .poster-ajio .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-ajio .pm-banner {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-        }
-
-        .poster-meesho .pm-header {
-            background: #f54d2e;
-            color: #fff;
-        }
-        .poster-meesho .pm-header .pm-logo {
-            color: #ffd54f;
-        }
-        .poster-meesho .pm-header .pm-search {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ddd;
-        }
-        .poster-meesho .pm-banner {
-            background: linear-gradient(135deg, #f54d2e, #c62828);
-        }
-
-        /* ───────────── NO PRODUCTS ───────────── */
-        .no-products {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        /* ───────────── TOAST ───────────── */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-width: 360px;
-            width: 100%;
-        }
-        .toast {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideUp 0.3s ease;
-            font-size: 0.9rem;
-        }
-        .toast i {
-            font-size: 1.1rem;
-            color: var(--primary);
-        }
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ───────────── FOOTER ───────────── */
-        .app-footer {
-            margin-top: 48px;
-            padding: 24px 0;
-            border-top: 1px solid var(--border);
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        /* ───────────── RESPONSIVE ───────────── */
-        @media (max-width: 768px) {
-            .product-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 14px;
-            }
-            .platform-btn {
-                padding: 8px 14px;
-                font-size: 0.78rem;
-            }
-            .platform-btn span.label {
-                display: none;
-            }
-            .poster-mockup .pm-products {
-                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            }
-            .poster-mockup .pm-banner {
-                font-size: 1rem;
-                min-height: 30px;
-                margin: 8px 12px 4px;
-                padding: 12px;
-            }
-            .poster-mockup .pm-header {
-                padding: 8px 12px;
-            }
-            .poster-mockup .pm-header .pm-search {
-                min-width: 80px;
-                font-size: 0.7rem;
-            }
-            .poster-mockup .pm-nav {
-                padding: 4px 12px;
-                gap: 6px;
-            }
-            .poster-mockup .pm-nav span {
-                font-size: 0.6rem;
-            }
-            .poster-mockup .pm-footer {
-                font-size: 0.5rem;
-                gap: 8px;
-                padding: 4px 12px;
-            }
-            .poster-clickable .poster-overlay-label {
-                font-size: 0.7rem;
-                padding: 6px 16px;
-                bottom: 12px;
-            }
-            .products-header h2 {
-                font-size: 1rem;
-            }
-            .filters-section {
-                gap: 6px;
-            }
-            .filter-btn {
-                font-size: 0.7rem;
-                padding: 4px 12px;
-            }
-        }
-        @media (max-width: 480px) {
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            .container {
-                padding: 0 12px;
-            }
-            .hero h1 {
-                font-size: 1.5rem;
-            }
-            .hero p {
-                font-size: 0.9rem;
-            }
-            .platform-btn {
-                padding: 6px 12px;
-                font-size: 0.7rem;
-            }
-            .poster-mockup .pm-products .pm-item {
-                font-size: 0.45rem;
-            }
-            .poster-mockup .pm-products .pm-item i {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    /* responsive tweaks */
+    @media (max-width: 640px) {
+      .poster-products {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .poster-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="app-header"></div>
+  
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1>Discover the Best Deals Across Every Store</h1>
+      <p>KRAYVO brings together KRAYVO Originals, Amazon, Flipkart, Myntra, and more – compare, save, and shop in one place.</p>
+      <div class="search-wrapper">
+        <input type="text" id="globalSearch" placeholder="Search products, brands, categories..." oninput="handleSearch()">
+      </div>
+      <div class="trending-searches">
+        <span>Trending: </span>
+        <a onclick="setSearch('iPhone')">iPhone</a>,
+        <a onclick="setSearch('Shoes')">Shoes</a>,
+        <a onclick="setSearch('Saree')">Saree</a>
+      </div>
+    </section>
 
-    <!-- ─── HEADER ─── -->
-    <header class="app-header">
-        <div class="container header-inner">
-            <div class="logo">
-                <i class="fas fa-compass"></i> KRAY<span>VO</span>
-            </div>
-            <div class="header-actions">
-                <button class="theme-toggle" onclick="toggleTheme()">
-                    <i class="fas fa-moon"></i> <span id="themeLabel">Dark</span>
-                </button>
-            </div>
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="platform-filters" id="platformFilters"></div>
+      <div class="category-filters" id="categoryFilters"></div>
+    </div>
+
+    <!-- Products Header -->
+    <div class="products-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h2 id="sectionTitle">All Platforms · For You</h2>
+      <span style="color:var(--text-muted);">Live prices · Instant updates</span>
+    </div>
+
+    <!-- Product Grid (default) -->
+    <div class="product-grid" id="productGrid"></div>
+
+    <!-- Poster Container (hidden by default) -->
+    <div id="posterContainer">
+      <!-- Posters will be injected by JavaScript -->
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="js/firebase.js"></script>
+  <script src="js/script.js"></script>
+  <script>
+    // ─── PLATFORM DATA ──────────────────────────────────────────────
+    const platformsList = [
+      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0', url: 'https://www.flipkart.com' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63', url: 'https://www.myntra.com' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32', url: 'https://www.savana.com' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316', url: 'https://www.ajio.com' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://www.meesho.com' }
+    ];
+
+    // ─── STATE ──────────────────────────────────────────────────────
+    let activePlatform = null;          // 'amazon', 'flipkart', etc.
+    let allProducts = [];
+    let currentCategory = 'For You';
+
+    // ─── GENERATE POSTER HTML FOR EACH PLATFORM ────────────────────
+    function getPosterHTML(platformKey) {
+      const plat = platformsList.find(p => p.key === platformKey);
+      if (!plat) return '';
+      const label = plat.label;
+      const icon = plat.icon;
+      const color = plat.color;
+      // Dummy product items
+      const dummyItems = Array.from({ length: 8 }, (_, i) => `
+        <div class="poster-product">
+          <div class="img-placeholder" style="background:#eef2f7;"></div>
+          <div class="title">${label} Item ${i+1}</div>
+          <div class="price">₹${Math.floor(Math.random()*5000+500)}</div>
         </div>
-    </header>
+      `).join('');
 
-    <!-- ─── MAIN ─── -->
-    <main class="container">
-
-        <!-- Hero -->
-        <section class="hero">
-            <h1>Discover the Best Deals Across Every Store</h1>
-            <p>KRAYVO brings together KRAYVO Originals, Amazon, Flipkart, Myntra, and more – compare, save, and shop in one place.</p>
-            <div class="search-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="globalSearch" placeholder="Search products, brands, categories..." oninput="handleSearch()" />
+      return `
+        <div class="poster poster-${platformKey}" data-platform="${platformKey}">
+          <div class="poster-inner">
+            <!-- header -->
+            <div class="poster-header">
+              <div class="poster-logo"><i class="${icon}" style="color:${color};"></i> ${label}</div>
+              <div class="poster-search"><i class="fas fa-search"></i> <span>Search ${label}...</span></div>
+              <div><i class="fas fa-user"></i> <i class="fas fa-shopping-cart" style="margin-left:12px;"></i></div>
             </div>
-            <div class="trending-searches">
-                <span>Trending: </span>
-                <a onclick="setSearch('iPhone')">iPhone</a>,
-                <a onclick="setSearch('Shoes')">Shoes</a>,
-                <a onclick="setSearch('Saree')">Saree</a>
+            <!-- nav -->
+            <div class="poster-nav">
+              <span>Electronics</span> <span>Fashion</span> <span>Home</span>
+              <span>Beauty</span> <span>Mobiles</span> <span>Books</span>
             </div>
-        </section>
-
-        <!-- Platform Bar -->
-        <div class="platform-bar" id="platformBar"></div>
-
-        <!-- Category Tabs + Filters -->
-        <div class="filters-section">
-            <div class="category-filters" id="categoryFilters"></div>
-        </div>
-
-        <!-- Products Header -->
-        <div class="products-header">
-            <h2 id="sectionTitle">All Platforms · For You <span class="count-badge" id="itemCount">0</span></h2>
-            <span class="live-tag"><i class="fas fa-circle" style="color:#10b981;font-size:0.5rem;"></i> Live prices</span>
-        </div>
-
-        <!-- Poster Area (hidden by default) -->
-        <div class="poster-wrapper" id="posterWrapper">
-            <div class="poster-clickable" id="posterClickable" onclick="openPlatformUrl()">
-                <div class="poster-mockup" id="posterMockup"></div>
-                <div class="poster-overlay-label">
-                    <i class="fas fa-external-link-alt"></i> Click to visit <span id="posterLabel">Amazon</span>
-                </div>
+            <!-- banner -->
+            <div class="poster-banner">
+              <span>🔥 Big ${label} Sale – Up to 70% Off</span>
             </div>
+            <!-- product grid -->
+            <div class="poster-products">
+              ${dummyItems}
+            </div>
+            <!-- footer -->
+            <div class="poster-footer">
+              <div class="links">
+                <span>About</span> <span>Contact</span> <span>Terms</span> <span>Privacy</span>
+              </div>
+              <span>© 2026 ${label} – All rights reserved</span>
+            </div>
+            <div class="poster-click-hint"><i class="fas fa-external-link-alt"></i> Click anywhere to visit ${label}</div>
+          </div>
         </div>
+      `;
+    }
 
-        <!-- Product Grid -->
-        <div class="product-grid" id="productGrid"></div>
-
-    </main>
-
-    <!-- ─── FOOTER ─── -->
-    <footer class="app-footer">
-        <div class="container">
-            &copy; 2026 KRAYVO — Discover Across Marketplaces
-        </div>
-    </footer>
-
-    <!-- ─── TOAST CONTAINER ─── -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script>
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  PLATFORM DATA
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        const PLATFORMS = [{
-            key: 'amazon',
-            label: 'Amazon',
-            icon: 'fab fa-amazon',
-            color: '#FF9900',
-            url: 'https://www.amazon.in',
-            bg: '#131921'
-        }, {
-            key: 'flipkart',
-            label: 'Flipkart',
-            icon: 'fas fa-store',
-            color: '#2874f0',
-            url: 'https://www.flipkart.com',
-            bg: '#2874f0'
-        }, {
-            key: 'myntra',
-            label: 'Myntra',
-            icon: 'fas fa-tshirt',
-            color: '#e91e63',
-            url: 'https://www.myntra.com',
-            bg: '#e91e63'
-        }, {
-            key: 'savana',
-            label: 'Savana',
-            icon: 'fas fa-leaf',
-            color: '#2e7d32',
-            url: 'https://www.savana.com',
-            bg: '#2e7d32'
-        }, {
-            key: 'ajio',
-            label: 'Ajio',
-            icon: 'fas fa-shopping-bag',
-            color: '#f97316',
-            url: 'https://www.ajio.com',
-            bg: '#f97316'
-        }, {
-            key: 'meesho',
-            label: 'Meesho',
-            icon: 'fas fa-gem',
-            color: '#f54d2e',
-            url: 'https://www.meesho.com',
-            bg: '#f54d2e'
-        }];
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  STATE
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        const state = {
-            activePlatform: null, // null | 'amazon' | 'flipkart' | ...
-            activeCategory: 'For You',
-            searchQuery: '',
-        };
-
-        let currentPlatformUrl = '';
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  DEMO PRODUCTS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        const CATEGORIES = ['Mobile', 'Fashion', 'Beauty', 'Electronics', 'Home & Kitchen', 'Accessories', 'Books'];
-        const BRAND_NAMES = {
-            amazon: 'AmazonBasics',
-            flipkart: 'Flipkart SmartBuy',
-            myntra: 'Myntra',
-            savana: 'Savana',
-            ajio: 'Ajio',
-            meesho: 'Meesho'
-        };
-
-        function generateDemoProducts() {
-            const products = [];
-            PLATFORMS.forEach(plat => {
-                for (let i = 1; i <= 18; i++) {
-                    const cat = CATEGORIES[i % CATEGORIES.length];
-                    const price = Math.floor(Math.random() * 5000) + 299;
-                    const originalPrice = price + Math.floor(Math.random() * 3000) + 200;
-                    products.push({
-                        id: `demo_${plat.key}_${i}`,
-                        name: `${BRAND_NAMES[plat.key] || plat.label} ${cat} ${i}`,
-                        brand: BRAND_NAMES[plat.key] || plat.label,
-                        price,
-                        originalPrice,
-                        category: cat,
-                        platform: plat.key,
-                        imageUrl: null,
-                        affiliateLink: plat.key === 'krayvo' ? '#' : `https://www.${plat.key}.com`,
-                        createdAt: new Date(Date.now() - i * 60000)
-                    });
-                }
-            });
-            return products;
+    // ─── INIT POSTERS ──────────────────────────────────────────────
+    function initPosters() {
+      const container = document.getElementById('posterContainer');
+      container.innerHTML = platformsList
+        .filter(p => p.key !== 'krayvo')  // skip KRAYVO (already on page)
+        .map(p => getPosterHTML(p.key))
+        .join('');
+      // click handler for the whole container
+      container.addEventListener('click', (e) => {
+        if (activePlatform) {
+          const plat = platformsList.find(p => p.key === activePlatform);
+          if (plat && plat.url && plat.url !== '#') {
+            window.open(plat.url, '_blank');
+          }
         }
+      });
+    }
+    initPosters();
 
-        let allProducts = generateDemoProducts();
+    // ─── SHOW / HIDE POSTER ──────────────────────────────────────
+    function showPlatformPoster(platformKey) {
+      // If already active, do nothing (or toggle off? we'll keep it)
+      if (activePlatform === platformKey) return;
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER: PLATFORM BAR
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function renderPlatformBar() {
-            const bar = document.getElementById('platformBar');
-            bar.innerHTML = PLATFORMS.map(p => `
-                <button class="platform-btn ${state.activePlatform === p.key ? 'active' : ''}"
-                        data-key="${p.key}"
-                        onclick="selectPlatform('${p.key}')"
-                        aria-label="${p.label}">
-                    <i class="${p.icon}"></i>
-                    <span class="label">${p.label}</span>
-                    ${p.key === 'amazon' ? '<span class="badge">IN</span>' : ''}
-                </button>
-            `).join('');
+      // Hide product grid, show poster container
+      document.getElementById('productGrid').style.display = 'none';
+      document.getElementById('posterContainer').style.display = 'block';
+
+      // Hide all posters, then show the selected one
+      document.querySelectorAll('.poster').forEach(el => el.classList.remove('active'));
+      const target = document.querySelector(`.poster[data-platform="${platformKey}"]`);
+      if (target) target.classList.add('active');
+
+      activePlatform = platformKey;
+      updateActiveButton();
+    }
+
+    function hidePosterAndShowProducts() {
+      document.getElementById('posterContainer').style.display = 'none';
+      document.getElementById('productGrid').style.display = 'grid';
+      activePlatform = null;
+      updateActiveButton();
+    }
+
+    // ─── UPDATE ACTIVE BUTTON ──────────────────────────────────────
+    function updateActiveButton() {
+      document.querySelectorAll('.platform-filters .filter-btn').forEach(btn => {
+        btn.classList.remove('active-platform');
+        if (btn.dataset.platform === activePlatform) {
+          btn.classList.add('active-platform');
         }
+      });
+    }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER: CATEGORY TABS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function renderCategoryTabs() {
-            const container = document.getElementById('categoryFilters');
-            const allCats = ['For You', ...CATEGORIES];
-            container.innerHTML = allCats.map(c =>
-                `<button class="filter-btn ${state.activeCategory === c ? 'active' : ''}"
-                        onclick="selectCategory('${c}')">${c}</button>`
-            ).join('');
-        }
+    // ─── CATEGORY / SEARCH HANDLING ──────────────────────────────
+    window.switchCategory = (cat) => {
+      currentCategory = cat;
+      hidePosterAndShowProducts();
+      renderFilters();
+      renderProducts();
+    };
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER: PRODUCT GRID
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function getProductImage(p) {
-            // Simple placeholder with platform color
-            const plat = PLATFORMS.find(pl => pl.key === p.platform) || PLATFORMS[0];
-            const bg = plat.color || '#6366f1';
-            return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect width='200' height='200' fill='${encodeURIComponent(bg)}22'/%3E%3Ctext x='100' y='100' text-anchor='middle' dy='.3em' font-family='Inter,sans-serif' font-size='48' fill='${encodeURIComponent(bg)}'%3E${plat.label[0]}%3C/text%3E%3C/svg%3E`;
-        }
+    function handleSearch() {
+      // If a poster is shown, hide it and show products
+      if (activePlatform) {
+        hidePosterAndShowProducts();
+      }
+      renderProducts();
+    }
 
-        function renderProducts() {
-            const grid = document.getElementById('productGrid');
-            const search = state.searchQuery.toLowerCase().trim();
-            let filtered = [...allProducts];
+    window.setSearch = (term) => {
+      document.getElementById('globalSearch').value = term;
+      handleSearch();
+    };
 
-            // Search
-            if (search) {
-                filtered = filtered.filter(p =>
-                    p.name.toLowerCase().includes(search) ||
-                    (p.brand && p.brand.toLowerCase().includes(search)) ||
-                    p.category.toLowerCase().includes(search)
-                );
-            }
+    // ─── OVERRIDE PLATFORM BUTTON CLICKS ──────────────────────────
+    // We keep the original openPlatformOverlay logic, but we'll replace it.
+    // We'll redefine the click handler in renderFilters.
+    function renderFilters() {
+      const platContainer = document.getElementById('platformFilters');
+      platContainer.innerHTML = platformsList.map(p => {
+        const isKrayvo = p.key === 'krayvo';
+        return `<button class="filter-btn" data-platform="${p.key}" onclick="${isKrayvo ? 'showToast(\'KRAYVO products are already on the homepage\', \'info\')' : `showPlatformPoster('${p.key}')`}">
+          <i class="${p.icon}"></i> ${p.label}
+        </button>`;
+      }).join('');
 
-            // Category
-            if (state.activeCategory !== 'For You') {
-                filtered = filtered.filter(p => p.category === state.activeCategory);
-            } else {
-                // "For You": mix of recent + discounted
-                const recent = [...filtered].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
-                const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0, 8);
-                const merged = [...recent, ...discounted];
-                filtered = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-                if (filtered.length === 0) filtered = allProducts.slice(0, 14);
-            }
+      const catContainer = document.getElementById('categoryFilters');
+      const allCats = ['For You', ...categories];
+      catContainer.innerHTML = allCats.map(c =>
+        `<button class="filter-btn ${currentCategory === c ? 'active' : ''}" onclick="switchCategory('${c}')">${c}</button>`
+      ).join('');
 
-            // Update count
-            document.getElementById('itemCount').textContent = filtered.length;
+      updateActiveButton();
+    }
 
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="no-products">✨ No products found. Try a different search.</div>`;
-                return;
-            }
+    // ─── PRODUCT DATA & RENDERING (unchanged, except we use hidePoster on search) ──
+    const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
+    const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
 
-            grid.innerHTML = filtered.map(p => {
-                const imgSrc = getProductImage(p);
-                const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
-                const plat = PLATFORMS.find(pl => pl.key === p.platform) || PLATFORMS[0];
-                return `
-                    <div class="product-card">
-                        <div class="product-img">
-                            <img src="${imgSrc}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy" />
-                            <span class="platform-badge"><i class="${plat.icon}"></i> ${plat.label}</span>
-                            <button class="wishlist-btn" onclick="toggleWishlist('${p.id}')" aria-label="Add to wishlist">
-                                <i class="far fa-heart"></i>
-                            </button>
-                        </div>
-                        <div class="product-info">
-                            <div class="brand">${p.brand || plat.label}</div>
-                            <div class="name">${p.name}</div>
-                            <div class="price-row">
-                                ${p.originalPrice ? `<span class="old-price">₹${p.originalPrice}</span>` : ''}
-                                <span class="price">₹${p.price}</span>
-                                ${discount > 0 ? `<span class="discount">${discount}% OFF</span>` : ''}
-                            </div>
-                            <button class="btn-sm" onclick="showToast('Deal details coming soon!', 'info')">View Deal →</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER: POSTER
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function renderPoster(platformKey) {
-            const plat = PLATFORMS.find(p => p.key === platformKey);
-            if (!plat) return;
-
-            currentPlatformUrl = plat.url;
-            const wrapper = document.getElementById('posterWrapper');
-            const mockup = document.getElementById('posterMockup');
-            const label = document.getElementById('posterLabel');
-
-            label.textContent = plat.label;
-
-            // Build the poster mockup HTML
-            const catItems = CATEGORIES.slice(0, 6).map(c =>
-                `<span>${c}</span>`
-            ).join('');
-
-            const productItems = Array.from({ length: 8 }, (_, i) =>
-                `<div class="pm-item"><i class="fas fa-${['mobile-alt','tshirt','gem','laptop','couch','headphones','book','watch'][i % 8]}"></i>Item ${i+1}</div>`
-            ).join('');
-
-            mockup.className = `poster-mockup poster-${plat.key}`;
-            mockup.innerHTML = `
-                <div class="pm-header">
-                    <div class="pm-logo"><i class="${plat.icon}"></i> ${plat.label}</div>
-                    <div class="pm-search"><i class="fas fa-search" style="margin-right:6px;opacity:0.5;"></i> Search ${plat.label}...</div>
-                    <div style="display:flex;gap:8px;font-size:0.7rem;color:rgba(255,255,255,0.5);">
-                        <span>Sign In</span>
-                        <span>Cart</span>
-                    </div>
-                </div>
-                <div class="pm-nav">
-                    ${catItems}
-                </div>
-                <div class="pm-banner">
-                    <div class="banner-text">
-                        🎉 Shop the best deals on ${plat.label}
-                        <small>Exclusive offers • Free shipping • Trusted</small>
-                    </div>
-                </div>
-                <div class="pm-products">
-                    ${productItems}
-                </div>
-                <div class="pm-footer">
-                    <span>About</span>
-                    <span>Careers</span>
-                    <span>Privacy</span>
-                    <span>Contact</span>
-                    <span>© ${plat.label}</span>
-                </div>
-            `;
-
-            wrapper.classList.add('active');
-            // Fade in animation
-            wrapper.style.opacity = '0';
-            wrapper.style.transform = 'scale(0.97)';
-            requestAnimationFrame(() => {
-                wrapper.style.opacity = '1';
-                wrapper.style.transform = 'scale(1)';
-            });
-
-            // Hide product grid
-            document.getElementById('productGrid').style.display = 'none';
-            document.querySelector('.products-header .live-tag').style.display = 'none';
-            document.getElementById('sectionTitle').innerHTML =
-                `<i class="${plat.icon}" style="color:${plat.color};"></i> ${plat.label} <span class="count-badge">Poster</span>`;
-        }
-
-        function hidePoster() {
-            const wrapper = document.getElementById('posterWrapper');
-            wrapper.classList.remove('active');
-            wrapper.style.opacity = '0';
-            wrapper.style.transform = 'scale(0.97)';
-            document.getElementById('productGrid').style.display = 'grid';
-            document.querySelector('.products-header .live-tag').style.display = 'block';
-            // Restore title
-            const cat = state.activeCategory;
-            document.getElementById('sectionTitle').innerHTML =
-                `All Platforms · ${cat} <span class="count-badge" id="itemCount">0</span>`;
-            // Re-run product render to update count
-            renderProducts();
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  INTERACTIONS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function selectPlatform(key) {
-            if (state.activePlatform === key) {
-                // Toggle off: go back to products
-                state.activePlatform = null;
-                renderPlatformBar();
-                hidePoster();
-                renderProducts();
-                return;
-            }
-
-            state.activePlatform = key;
-            renderPlatformBar();
-            renderPoster(key);
-            // Clear any search when showing poster
-            state.searchQuery = '';
-            document.getElementById('globalSearch').value = '';
-        }
-
-        function selectCategory(cat) {
-            state.activeCategory = cat;
-            // If poster is showing, hide it and show products
-            if (state.activePlatform !== null) {
-                state.activePlatform = null;
-                renderPlatformBar();
-                hidePoster();
-            }
-            renderCategoryTabs();
-            renderProducts();
-        }
-
-        function handleSearch() {
-            state.searchQuery = document.getElementById('globalSearch').value;
-            // If poster is showing, hide it
-            if (state.activePlatform !== null) {
-                state.activePlatform = null;
-                renderPlatformBar();
-                hidePoster();
-            }
-            renderProducts();
-        }
-
-        function setSearch(term) {
-            document.getElementById('globalSearch').value = term;
-            state.searchQuery = term;
-            if (state.activePlatform !== null) {
-                state.activePlatform = null;
-                renderPlatformBar();
-                hidePoster();
-            }
-            renderProducts();
-        }
-
-        function openPlatformUrl() {
-            if (currentPlatformUrl) {
-                window.open(currentPlatformUrl, '_blank', 'noopener,noreferrer');
-                showToast(`Opening ${state.activePlatform || 'store'} in new tab...`, 'success');
-            } else {
-                showToast('No URL available', 'error');
-            }
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  WISHLIST (localStorage)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function toggleWishlist(id) {
-            let wishlist = JSON.parse(localStorage.getItem('krayvo_wishlist')) || [];
-            if (wishlist.includes(id)) {
-                wishlist = wishlist.filter(pid => pid !== id);
-                showToast('Removed from wishlist', 'info');
-            } else {
-                wishlist.push(id);
-                showToast('Added to wishlist ❤️', 'success');
-            }
-            localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  TOAST
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            const iconMap = { success: 'fa-check-circle', info: 'fa-info-circle', error: 'fa-exclamation-circle' };
-            toast.innerHTML = `<i class="fas ${iconMap[type] || iconMap.info}"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 2800);
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  THEME TOGGLE
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const next = current === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', next);
-            document.getElementById('themeLabel').textContent = next === 'dark' ? 'Light' : 'Dark';
-            localStorage.setItem('krayvo_theme', next);
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  INIT
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function init() {
-            // Restore theme
-            const saved = localStorage.getItem('krayvo_theme');
-            if (saved) {
-                document.documentElement.setAttribute('data-theme', saved);
-                document.getElementById('themeLabel').textContent = saved === 'dark' ? 'Light' : 'Dark';
-            }
-
-            renderPlatformBar();
-            renderCategoryTabs();
-            renderProducts();
-
-            // Ensure poster is hidden initially
-            document.getElementById('posterWrapper').classList.remove('active');
-            document.getElementById('posterWrapper').style.opacity = '0';
-            document.getElementById('productGrid').style.display = 'grid';
-            document.querySelector('.products-header .live-tag').style.display = 'block';
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  KEYBOARD / ACCESSIBILITY
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && state.activePlatform) {
-                state.activePlatform = null;
-                renderPlatformBar();
-                hidePoster();
-                renderProducts();
-                showToast('Returned to products', 'info');
-            }
+    const DEMO_PRODUCTS = [];
+    platformsList.forEach(plat => {
+      for(let i=1; i<=20; i++){
+        const cat = categories[i % categories.length];
+        const price = Math.floor(Math.random()*5000)+299;
+        const originalPrice = price + Math.floor(Math.random()*3000)+200;
+        DEMO_PRODUCTS.push({
+          id: `demo_${plat.key}_${i}`,
+          name: `${brandNames[plat.key]} ${cat} ${i}`,
+          brand: brandNames[plat.key],
+          price,
+          originalPrice,
+          category: cat,
+          platform: plat.key,
+          imageUrl: null,
+          affiliateLink: plat.key === 'krayvo' ? '#' : `https://www.${plat.key}.com`,
+          createdAt: new Date()
         });
+      }
+    });
 
-        // Click outside poster to close? No, we want intentional.
+    allProducts = [...DEMO_PRODUCTS];
 
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    function renderProducts() {
+      const search = document.getElementById('globalSearch').value.toLowerCase().trim();
+      let filtered = [...allProducts];
 
+      if(search) {
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(search) ||
+          (p.brand && p.brand.toLowerCase().includes(search)) ||
+          p.category.toLowerCase().includes(search)
+        );
+      }
+      
+      if(currentCategory !== 'For You') {
+        filtered = filtered.filter(p => p.category === currentCategory);
+      } else {
+        const recent = [...filtered].sort((a,b) => b.createdAt - a.createdAt).slice(0,12);
+        const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0,8);
+        filtered = [...recent, ...discounted].filter((v,i,a) => a.findIndex(t => t.id === v.id) === i);
+        if(filtered.length === 0) filtered = allProducts.slice(0,16);
+      }
+
+      const grid = document.getElementById('productGrid');
+      if(filtered.length === 0) {
+        grid.innerHTML = '<div class="no-products" style="grid-column:1/-1; text-align:center; padding:50px;">✨ No products found.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const imgSrc = getProductImage(p);
+        const discount = p.originalPrice ? Math.round((1 - p.price/p.originalPrice)*100) : 0;
+        const plat = platformsList.find(pl => pl.key === p.platform) || platformsList[0];
+        return `
+          <div class="card product-card">
+            <div class="product-img">
+              <a href="product.html?id=${p.id}"><img src="${imgSrc}" alt="${p.name.replace(/"/g, '&quot;')}" loading="lazy"></a>
+              <span class="platform-badge"><i class="${plat.icon}"></i> ${plat.label}</span>
+              <button class="wishlist-btn" onclick="toggleWishlist('${p.id}')"><i class="far fa-heart"></i></button>
+            </div>
+            <div class="product-info">
+              <div class="brand">${p.brand || plat.label}</div>
+              <h3 class="name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+              <div class="price-row">
+                ${p.originalPrice ? `<span class="old-price">₹${p.originalPrice}</span>` : ''}
+                <span class="price">₹${p.price}</span>
+                ${discount > 0 ? `<span class="discount">${discount}% OFF</span>` : ''}
+              </div>
+              <a href="product.html?id=${p.id}" class="btn btn-primary btn-sm">View Deal →</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('sectionTitle').innerHTML = `All Platforms ${currentCategory !== 'For You' ? '· ' + currentCategory : '· For You'} <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-size:0.7rem; margin-left:8px;">${filtered.length} items</span>`;
+    }
+
+    // ─── OTHER FUNCTIONS ────────────────────────────────────────────
+    window.toggleWishlist = (pid) => {
+      let wishlist = JSON.parse(localStorage.getItem('krayvo_wishlist')) || [];
+      if (wishlist.includes(pid)) {
+        wishlist = wishlist.filter(id => id !== pid);
+        showToast('Removed from wishlist');
+      } else {
+        wishlist.push(pid);
+        showToast('Added to wishlist');
+      }
+      localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
+    };
+
+    // ─── SYNC FIRESTORE (unchanged) ──────────────────────────────
+    db.collection('products').orderBy('createdAt', 'desc').get().then(snap => {
+      if (!snap.empty) {
+        const firestoreProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const merged = [...DEMO_PRODUCTS];
+        firestoreProducts.forEach(fp => {
+          const idx = merged.findIndex(m => m.id === fp.id);
+          if (idx !== -1) merged[idx] = fp;
+          else merged.push(fp);
+        });
+        allProducts = merged;
+        renderProducts();
+      }
+    }).catch(() => console.log('Using demo data'));
+
+    // ─── INIT ──────────────────────────────────────────────────────
+    renderFilters();
+    renderProducts();
+  </script>
 </body>
 </html>
