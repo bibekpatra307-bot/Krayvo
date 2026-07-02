@@ -16,6 +16,39 @@
   <link rel="stylesheet" href="css/style.css">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* Platform Overlay Styles */
+    .platform-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg); z-index: 1000;
+      display: none; flex-direction: column;
+    }
+    .platform-overlay.active { display: flex; }
+    .overlay-top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border);
+    }
+    .overlay-top-bar .back-btn {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer;
+      color: var(--text); padding: 8px;
+      border-radius: 8px; transition: var(--transition);
+    }
+    .overlay-top-bar .back-btn:hover { background: var(--border); }
+    .overlay-top-bar .title { font-weight: 600; }
+    .overlay-top-bar .actions { display: flex; gap: 8px; }
+    .iframe-area {
+      flex: 1; position: relative; background: white;
+    }
+    .iframe-area iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    .iframe-fallback {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--card); flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
+    }
+    .iframe-fallback.active { display: flex; }
+  </style>
 </head>
 <body>
   <div id="app-header"></div>
@@ -44,32 +77,96 @@
 
     <!-- Products Header -->
     <div class="products-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 id="sectionTitle">KRAYVO · For You</h2>
+      <h2 id="sectionTitle">All Platforms · For You</h2>
       <span style="color:var(--text-muted);">Live prices · Instant updates</span>
     </div>
     <div class="product-grid" id="productGrid"></div>
   </main>
+
+  <!-- Platform Overlay (hidden by default) -->
+  <div class="platform-overlay" id="platformOverlay">
+    <div class="overlay-top-bar">
+      <button class="back-btn" onclick="closePlatformOverlay()">✕</button>
+      <span class="title" id="overlayTitle">Official Store</span>
+      <div class="actions">
+        <button class="btn btn-outline btn-sm" id="openInNewTabBtn">🔗 Open in New Tab</button>
+      </div>
+    </div>
+    <div class="iframe-area">
+      <iframe id="storeIframe" src="" title="Official Store"></iframe>
+      <div class="iframe-fallback" id="iframeFallback">
+        <h3>⚠️ This store cannot be displayed here</h3>
+        <p style="color:var(--text-muted);">Security settings prevent embedding. Please open in a new tab.</p>
+        <button class="btn btn-primary" onclick="openInNewTabFromFallback()">Open in New Tab</button>
+      </div>
+    </div>
+  </div>
 
   <div id="app-footer"></div>
 
   <script src="js/firebase.js"></script>
   <script src="js/script.js"></script>
   <script>
-    // ========== DATA & STATE ==========
+    // Platform data and URLs
     const platformsList = [
-      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1' },
-      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900' },
-      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0' },
-      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63' },
-      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32' },
-      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316' },
-      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e' }
+      { key: 'krayvo', label: 'KRAYVO', icon: 'fas fa-crown', color: '#6366f1', url: '#' },
+      { key: 'amazon', label: 'Amazon', icon: 'fab fa-amazon', color: '#FF9900', url: 'https://www.amazon.in' },
+      { key: 'flipkart', label: 'Flipkart', icon: 'fas fa-store', color: '#2874f0', url: 'https://www.flipkart.com' },
+      { key: 'myntra', label: 'Myntra', icon: 'fas fa-tshirt', color: '#e91e63', url: 'https://www.myntra.com' },
+      { key: 'savana', label: 'Savana', icon: 'fas fa-leaf', color: '#2e7d32', url: 'https://www.savana.com' },
+      { key: 'ajio', label: 'Ajio', icon: 'fas fa-shopping-bag', color: '#f97316', url: 'https://www.ajio.com' },
+      { key: 'meesho', label: 'Meesho', icon: 'fas fa-gem', color: '#f54d2e', url: 'https://www.meesho.com' }
     ];
-    const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
 
-    // Generate demo products
-    const DEMO_PRODUCTS = [];
+    let currentPlatformUrl = '';
+
+    // Open platform overlay
+    function openPlatformOverlay(platformKey, label) {
+      const plat = platformsList.find(p => p.key === platformKey);
+      if (!plat || !plat.url || plat.url === '#') {
+        showToast('KRAYVO products are already on the homepage', 'info');
+        return;
+      }
+      currentPlatformUrl = plat.url;
+      document.getElementById('overlayTitle').textContent = label + ' Official Store';
+      document.getElementById('storeIframe').src = plat.url;
+      document.getElementById('iframeFallback').classList.remove('active');
+      document.getElementById('platformOverlay').classList.add('active');
+
+      // Fallback detection: after 5 seconds, if iframe seems blocked, show fallback
+      setTimeout(() => {
+        // Since we can't reliably detect cross-origin block, we show fallback if iframe hasn't loaded (but onload may fire even if blocked)
+        // We'll just provide a manual button always visible.
+        // The fallback is triggered by the 'error' event (below)
+      }, 5000);
+    }
+
+    function closePlatformOverlay() {
+      document.getElementById('platformOverlay').classList.remove('active');
+      document.getElementById('storeIframe').src = ''; // stop loading
+    }
+
+    // Open in new tab from top bar
+    document.getElementById('openInNewTabBtn').addEventListener('click', () => {
+      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
+    });
+
+    // Fallback button
+    function openInNewTabFromFallback() {
+      if (currentPlatformUrl) window.open(currentPlatformUrl, '_blank', 'noopener');
+    }
+
+    // Detect iframe load error and show fallback
+    const iframe = document.getElementById('storeIframe');
+    iframe.addEventListener('error', () => {
+      document.getElementById('iframeFallback').classList.add('active');
+    });
+
+    // ========== PRODUCTS LOGIC (unchanged mostly) ==========
+    const categories = ["Mobile", "Fashion", "Beauty", "Electronics", "Home & Kitchen", "Accessories", "Books"];
     const brandNames = { krayvo:'KRAYVO', amazon:'AmazonBasics', flipkart:'Flipkart SmartBuy', myntra:'Myntra', savana:'Savana', ajio:'Ajio', meesho:'Meesho' };
+
+    const DEMO_PRODUCTS = [];
     platformsList.forEach(plat => {
       for(let i=1; i<=20; i++){
         const cat = categories[i % categories.length];
@@ -93,11 +190,10 @@
     let allProducts = [...DEMO_PRODUCTS];
     let currentCategory = 'For You';
 
-    // ========== RENDER ==========
     function renderProducts() {
       const search = document.getElementById('globalSearch').value.toLowerCase().trim();
-      let filtered = allProducts.filter(p => !p.platform || p.platform === 'krayvo'); // Only show KRAYVO products by default? Actually we want all products, but platform filtering is now done via redirect, so here we show all products. But to keep the original behavior of showing KRAYVO products on homepage? The old version had a platform filter. Now since platform buttons are external links, we can just show all products on homepage. Or we could still allow filtering via the category filters. I'll just show all products.
-      
+      let filtered = [...allProducts];
+
       if(search) {
         filtered = filtered.filter(p =>
           p.name.toLowerCase().includes(search) ||
@@ -109,7 +205,6 @@
       if(currentCategory !== 'For You') {
         filtered = filtered.filter(p => p.category === currentCategory);
       } else {
-        // Show a mix of recent and discounted across all platforms
         const recent = [...filtered].sort((a,b) => b.createdAt - a.createdAt).slice(0,12);
         const discounted = filtered.filter(p => p.originalPrice && p.price < p.originalPrice).slice(0,8);
         filtered = [...recent, ...discounted].filter((v,i,a) => a.findIndex(t => t.id === v.id) === i);
@@ -125,7 +220,7 @@
       grid.innerHTML = filtered.map(p => {
         const imgSrc = getProductImage(p);
         const discount = p.originalPrice ? Math.round((1 - p.price/p.originalPrice)*100) : 0;
-        const plat = platformsList.find(pl => pl.key === (p.platform || 'krayvo')) || platformsList[0];
+        const plat = platformsList.find(pl => pl.key === p.platform) || platformsList[0];
         return `
           <div class="card product-card">
             <div class="product-img">
@@ -152,11 +247,10 @@
 
     function renderFilters() {
       const platContainer = document.getElementById('platformFilters');
-      // Platform buttons now link to redirect.html
       platContainer.innerHTML = platformsList.map(p =>
-        `<a href="redirect.html?platform=${p.key}" class="filter-btn" style="text-decoration:none;">
+        `<button class="filter-btn" onclick="openPlatformOverlay('${p.key}', '${p.label}')">
           <i class="${p.icon}"></i> ${p.label}
-        </a>`
+        </button>`
       ).join('');
 
       const catContainer = document.getElementById('categoryFilters');
@@ -166,7 +260,6 @@
       ).join('');
     }
 
-    // ========== ACTIONS ==========
     window.switchCategory = (cat) => {
       currentCategory = cat;
       renderFilters();
@@ -190,7 +283,7 @@
       localStorage.setItem('krayvo_wishlist', JSON.stringify(wishlist));
     };
 
-    // ========== FIRESTORE SYNC ==========
+    // Sync Firestore
     db.collection('products').orderBy('createdAt', 'desc').get().then(snap => {
       if (!snap.empty) {
         const firestoreProducts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -205,7 +298,6 @@
       }
     }).catch(() => console.log('Using demo data'));
 
-    // Initial render
     renderFilters();
     renderProducts();
   </script>
